@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gski"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "google-genai>=1.0",
+    "Pillow",
+    "argcomplete",
+]
+
+[project.scripts]
+gski = "gski.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["gski*"]
+
+[tool.setuptools.package-data]
+gski = ["skills/**/*"]
