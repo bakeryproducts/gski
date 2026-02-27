@@ -38,7 +38,7 @@ def build_config(args):
     image_config_kwargs = {}
     if args.aspect_ratio:
         image_config_kwargs["aspect_ratio"] = args.aspect_ratio
-    if args.size and args.model == "pro":
+    if args.size and args.model in ("pro", "flash3"):
         image_config_kwargs["image_size"] = args.size
 
     if image_config_kwargs:
@@ -109,7 +109,7 @@ def register(subparsers):
         "--size",
         choices=SIZES,
         metavar="SIZE",
-        help="output resolution (pro model only): 1K, 2K, 4K",
+        help="output resolution (pro/flash3): 1K, 2K, 4K",
     )
     p.add_argument(
         "--search", action="store_true", help="enable Google Search grounding"
@@ -123,8 +123,8 @@ def register(subparsers):
 
 
 def run(args):
-    if args.size and args.model != "pro":
-        print("error: --size requires --model pro", file=sys.stderr)
+    if args.size and args.model not in ("pro", "flash3"):
+        print("error: --size requires --model pro or flash3", file=sys.stderr)
         sys.exit(1)
 
     for p in args.image:
