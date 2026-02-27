@@ -9,7 +9,8 @@ from PIL import Image
 
 
 MODELS = {
-    "flash": "gemini-2.5-flash-image",
+    "flash2": "gemini-2.5-flash-image",
+    "flash3": "gemini-3.1-flash-image-preview",
     "pro": "gemini-3-pro-image-preview",
 }
 
@@ -95,7 +96,7 @@ def register(subparsers):
     p.add_argument(
         "--model",
         choices=list(MODELS.keys()),
-        default="flash",
+        default="flash3",
         help="model to use (default: flash)",
     )
     p.add_argument(
