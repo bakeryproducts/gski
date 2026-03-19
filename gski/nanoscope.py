@@ -64,7 +64,7 @@ def parse_json(text):
 def run_segment(response, images, output_dir):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
 
     im = images[0].copy()
     im.thumbnail([1024, 1024], Image.Resampling.LANCZOS)
@@ -155,8 +155,8 @@ def register(subparsers):
     )
     p.add_argument(
         "--output-dir",
-        default="./nanoscope-output",
-        help="output directory for segmentation (default: ./nanoscope-output)",
+        default="./output",
+        help="output directory for segmentation (default: ./output)",
     )
     p.set_defaults(func=run)
 

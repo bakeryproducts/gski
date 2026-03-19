@@ -1,3 +1,4 @@
+import io
 import os
 import sys
 from datetime import datetime
@@ -59,10 +60,10 @@ def build_contents(prompt, image_paths):
     return contents
 
 
-def save_images(response, output_dir):
+def save_images(response, output_dir, ext="jpg"):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     saved = []
     img_idx = 0
 
@@ -73,9 +74,12 @@ def save_images(response, output_dir):
             print(part.text)
         elif part.inline_data is not None:
             suffix = f"_{img_idx}" if img_idx > 0 else ""
-            filename = f"{ts}{suffix}.png"
+            filename = f"{ts}{suffix}.{ext}"
             filepath = output_dir / filename
-            image = part.as_image()
+            raw = part.inline_data.data
+            image = Image.open(io.BytesIO(raw))
+            if ext in ("jpg", "jpeg"):
+                image = image.convert("RGB")
             image.save(filepath)
             saved.append(filepath)
             img_idx += 1
@@ -115,9 +119,15 @@ def register(subparsers):
         "--search", action="store_true", help="enable Google Search grounding"
     )
     p.add_argument(
+        "--format",
+        choices=["jpg", "png", "webp"],
+        default="jpg",
+        help="output image format (default: jpg)",
+    )
+    p.add_argument(
         "--output-dir",
-        default="./nanobanana-output",
-        help="output directory (default: ./nanobanana-output)",
+        default="./output",
+        help="output directory (default: ./output)",
     )
     p.set_defaults(func=run)
 
@@ -147,7 +157,7 @@ def run(args):
         config=config,
     )
 
-    saved = save_images(response, args.output_dir)
+    saved = save_images(response, args.output_dir, ext=args.format)
 
     if not saved:
         print("error: no images generated", file=sys.stderr)

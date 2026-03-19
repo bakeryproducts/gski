@@ -8,10 +8,12 @@ def main():
     parser = argparse.ArgumentParser(prog="gski")
     sub = parser.add_subparsers(dest="command")
 
+    from gski.audioscope import register as as_register
     from gski.nanobanana import register as nb_register
     from gski.nanoscope import register as ns_register
     from gski.setup import register as setup_register
 
+    as_register(sub)
     nb_register(sub)
     ns_register(sub)
     setup_register(sub)
