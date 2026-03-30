@@ -9,12 +9,15 @@ gski/
 ├── pyproject.toml
 └── gski/
     ├── cli.py              # entry point: gski <command>
+    ├── llm_process.py      # gski llm-process — process files/data with Gemini
     ├── nanobanana.py       # gski nanobanana — Gemini image gen/edit
     ├── nanoscope.py        # gski nanoscope — Gemini image understanding
     ├── websearch.py        # gski websearch — web search via Gemini grounding
     ├── youtube_scope.py    # gski youtube-scope — YouTube data extraction via yt-dlp
     ├── setup.py            # gski setup <dir> — copy SKILL.md files
     └── skills/
+        ├── llm-process/
+        │   └── SKILL.md
         ├── nanobanana/
         │   └── SKILL.md
         ├── nanoscope/
@@ -28,6 +31,7 @@ gski/
 ## CLI
 
 ```
+gski llm-process "prompt" --file FILE [--file FILE]... [--model flash|pro] [--system TEXT] [--json] [--no-think]
 gski nanobanana "prompt" [--image FILE]... [--model flash|pro] [--aspect-ratio RATIO] [--size 1K|2K|4K] [--search] [--output-dir DIR]
 gski nanoscope "prompt" --image FILE [--url URL]... [--model flash|pro] [--detect] [--segment] [--output-dir DIR]
 gski websearch "query" [--model flash|flash-lite] [--raw]
