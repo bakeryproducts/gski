@@ -110,7 +110,7 @@ gski youtube-scope urls.txt --comments --transcript --archive done.txt > data.js
 ## Notes
 
 - Metadata-only searches are fast (flat playlist mode). Adding `--comments` or `--transcript` is much slower — one yt-dlp call per video.
-- `--archive` is useful for large batches — if interrupted, re-run the same command and it picks up where it left off.
+- `--archive` only works when passing a **file of URLs** or a channel/playlist as target — yt-dlp checks the archive before processing each video in the batch. It does **not** work when calling gski in a loop with one URL per call, because each invocation is independent. For loop-based resumability, maintain the archive yourself: check before calling, append the video ID after success.
 - yt-dlp handles rate limiting internally. For large batches, expect some throttling.
 - Transcripts use YouTube's auto-captions if manual subtitles aren't available. English is preferred, falls back to first available language.
 - Output is streamed — each video is printed as soon as it's processed. Safe to interrupt.
