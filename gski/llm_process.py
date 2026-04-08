@@ -8,8 +8,8 @@ from google.genai import types
 
 
 MODELS = {
-    "flash": "gemini-2.5-flash",
-    "pro": "gemini-2.5-pro",
+    "flash": "gemini-3-flash-preview",
+    "pro": "gemini-3-pro-preview",
 }
 
 BINARY_MIMES = {
