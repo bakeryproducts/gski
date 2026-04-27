@@ -56,7 +56,19 @@ def build_config(args):
 def build_contents(prompt, image_paths):
     contents = [prompt]
     for p in image_paths:
-        contents.append(Image.open(p))
+        if str(p).lower().endswith(".svg"):
+            try:
+                import cairosvg
+            except ImportError:
+                print(
+                    "error: cairosvg is required for SVG input; install with 'pip install cairosvg'",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
+            png_bytes = cairosvg.svg2png(url=str(p))
+            contents.append(Image.open(io.BytesIO(png_bytes)))
+        else:
+            contents.append(Image.open(p))
     return contents
 
 

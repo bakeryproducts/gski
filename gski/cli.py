@@ -9,6 +9,7 @@ def main():
     sub = parser.add_subparsers(dest="command")
 
     from gski.audioscope import register as as_register
+    from gski.deepresearch import register as dr_register
     from gski.llm_process import register as lp_register
     from gski.nanobanana import register as nb_register
     from gski.nanoscope import register as ns_register
@@ -18,6 +19,7 @@ def main():
     from gski.youtube_scope import register as ys_register
 
     as_register(sub)
+    dr_register(sub)
     lp_register(sub)
     nb_register(sub)
     ns_register(sub)
