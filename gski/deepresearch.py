@@ -25,6 +25,7 @@ from gski.deepresearch_lib.state import (
 
 def _write_report(job, text, output):
     internal = save_report(job, text)
+    save_job(job)
     if output:
         out = Path(output)
         out.write_text(text)
