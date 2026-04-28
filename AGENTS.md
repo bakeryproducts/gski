@@ -10,6 +10,7 @@ gski/
 └── gski/
     ├── cli.py              # entry point: gski <command>
     ├── deepresearch.py     # gski deepresearch — Gemini Deep Research agent (async jobs)
+    ├── gptimage2.py        # gski gptimage2 — OpenAI GPT Image gen/edit
     ├── llm_process.py      # gski llm-process — process files/data with Gemini
     ├── nanobanana.py       # gski nanobanana — Gemini image gen/edit
     ├── nanoscope.py        # gski nanoscope — Gemini image understanding
@@ -18,6 +19,8 @@ gski/
     ├── setup.py            # gski setup <dir> — copy SKILL.md files
     └── skills/
         ├── deepresearch/
+        │   └── SKILL.md
+        ├── gptimage2/
         │   └── SKILL.md
         ├── llm-process/
         │   └── SKILL.md
@@ -34,6 +37,7 @@ gski/
 ## CLI
 
 ```
+gski gptimage2 "prompt" [--image FILE]... [--mask FILE] [--model gpt-image-2|...] [--size WxH|auto] [--quality auto|low|medium|high] [--format jpg|png|webp] [--compression N] [--moderation auto|low] [--background auto|opaque] [-n N] [--output-dir DIR]
 gski llm-process "prompt" --file FILE [--file FILE]... [--model flash|pro] [--system TEXT] [--json] [--no-think]
 gski nanobanana "prompt" [--image FILE]... [--model flash|pro] [--aspect-ratio RATIO] [--size 1K|2K|4K] [--search] [--output-dir DIR]
 gski nanoscope "prompt" --image FILE [--url URL]... [--model flash|pro] [--detect] [--segment] [--output-dir DIR]
@@ -53,8 +57,10 @@ gski setup <target-dir>
 ## Dependencies
 
 - `google-genai` — Gemini API SDK
+- `openai` — OpenAI API SDK (for gptimage2)
 - `Pillow` — image handling
 - Requires `GEMINI_API_KEY` env var
+- Requires `OPENAI_API_KEY` env var for gptimage2
 - Requires `yt-dlp` for youtube-scope
 
 ## Install

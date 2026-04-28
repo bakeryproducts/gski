@@ -10,6 +10,7 @@ def main():
 
     from gski.audioscope import register as as_register
     from gski.deepresearch import register as dr_register
+    from gski.gptimage2 import register as gi_register
     from gski.llm_process import register as lp_register
     from gski.nanobanana import register as nb_register
     from gski.nanoscope import register as ns_register
@@ -20,6 +21,7 @@ def main():
 
     as_register(sub)
     dr_register(sub)
+    gi_register(sub)
     lp_register(sub)
     nb_register(sub)
     ns_register(sub)
