@@ -11,6 +11,7 @@ from gski.deepresearch_lib.api import (
     poll,
 )
 from gski.deepresearch_lib.format import fmt_age, print_job_header, print_job_row
+from gski.deepresearch_lib.resolve import resolve_text
 from gski.deepresearch_lib.state import (
     all_jobs,
     load_job,
@@ -24,6 +25,7 @@ from gski.deepresearch_lib.state import (
 
 
 def _write_report(job, text, output):
+    text = resolve_text(text)
     internal = save_report(job, text)
     save_job(job)
     if output:
@@ -233,6 +235,21 @@ def cmd_rm(args):
     print(f"removed job {job['job_id']}")
 
 
+def cmd_resolve(args):
+    src = Path(args.file)
+    if not src.exists():
+        print(f"error: file not found: {src}", file=sys.stderr)
+        sys.exit(1)
+    text = src.read_text()
+    resolved = resolve_text(text)
+    if args.output:
+        dst = Path(args.output)
+    else:
+        dst = src.with_name(f"{src.stem}_resolved_links{src.suffix}")
+    dst.write_text(resolved)
+    print(f"wrote {dst}")
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -315,3 +332,13 @@ def register(subparsers):
         "--keep-report", action="store_true", help="keep saved report file"
     )
     rm.set_defaults(func=cmd_rm)
+
+    res = sp.add_parser(
+        "resolve",
+        help="resolve grounding-redirect links in a report file",
+    )
+    res.add_argument("file", help="path to report markdown file")
+    res.add_argument(
+        "--output", "-o", help="output path (default: <stem>_resolved_links.md)"
+    )
+    res.set_defaults(func=cmd_resolve)
