@@ -37,7 +37,6 @@ gski gptimage2 "replace the pool" --image room.png --mask mask.png   # masked ed
 | `--quality` | `auto`, `low`, `medium`, `high` | `auto` | |
 | `--format` | `jpg`, `png`, `webp` | `jpg` | |
 | `--compression` | `0-100` | none | jpg/webp only |
-| `--moderation` | `auto`, `low` | `auto` | |
 | `--background` | `auto`, `opaque` | `auto` | gpt-image-2 does not support transparent |
 | `-n N` | integer | `1` | number of images |
 | `--output-dir` | path | `./output` | |
@@ -68,3 +67,5 @@ gski gptimage2 "gift basket labeled 'Relax & Unwind' with ribbon, containing all
 ## After generation
 
 List `./output/` to see generated files. Do not read image files.
+
+DO NOT READ LARGE IMAGES OVER 5MB — this breaks opencode sessions.

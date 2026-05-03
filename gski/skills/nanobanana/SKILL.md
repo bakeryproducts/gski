@@ -62,3 +62,5 @@ gski nanobanana "seamless geometric triangle pattern, duotone" --aspect-ratio 1:
 ## After generation
 
 List `./nanobanana-output/` to see generated files. Do not read image files.
+
+DO NOT READ LARGE IMAGES OVER 5MB — this breaks opencode sessions.

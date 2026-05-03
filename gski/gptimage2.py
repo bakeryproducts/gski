@@ -1,4 +1,5 @@
 import base64
+import io
 import os
 import re
 import sys
@@ -33,15 +34,31 @@ def validate_size(value):
     return value
 
 
-def save_b64_images(data_items, output_dir, ext):
+PIL_FORMAT = {"jpg": "JPEG", "png": "PNG", "webp": "WEBP"}
+
+
+def save_b64_images(data_items, output_dir, ext, compression=None):
+    from PIL import Image
+
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     ts = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+    target = PIL_FORMAT[ext]
     saved = []
     for i, b64 in enumerate(data_items):
         suffix = f"_{i}" if i > 0 else ""
         filepath = output_dir / f"{ts}{suffix}.{ext}"
-        filepath.write_bytes(base64.b64decode(b64))
+        raw = base64.b64decode(b64)
+        img = Image.open(io.BytesIO(raw))
+        save_kwargs = {}
+        if target == "JPEG":
+            if img.mode in ("RGBA", "LA", "P"):
+                img = img.convert("RGB")
+            save_kwargs["quality"] = compression if compression is not None else 90
+        elif target == "WEBP":
+            if compression is not None:
+                save_kwargs["quality"] = compression
+        img.save(filepath, format=target, **save_kwargs)
         saved.append(filepath)
     return saved
 
@@ -92,12 +109,6 @@ def register(subparsers):
         type=int,
         metavar="0-100",
         help="compression level for jpeg/webp",
-    )
-    p.add_argument(
-        "--moderation",
-        choices=["auto", "low"],
-        default="auto",
-        help="moderation strictness (default: auto)",
     )
     p.add_argument(
         "--background",
@@ -159,7 +170,6 @@ def run(args):
         "n": args.n,
         "size": args.size,
         "quality": args.quality,
-        "moderation": args.moderation,
         "background": args.background,
         "output_format": api_format,
     }
@@ -175,15 +185,14 @@ def run(args):
     try:
         if args.image:
             image_files = [open(p, "rb") for p in args.image]
+            edit_kwargs = dict(common)
+            edit_kwargs["image"] = image_files if len(image_files) > 1 else image_files[0]
             if args.mask:
                 mask_file = open(args.mask, "rb")
-            result = client.images.edit(
-                image=image_files if len(image_files) > 1 else image_files[0],
-                mask=mask_file,
-                **common,
-            )
+                edit_kwargs["mask"] = mask_file
+            result = client.images.edit(**edit_kwargs)
         else:
-            result = client.images.generate(**common)
+            result = client.images.generate(moderation="low", **common)
     finally:
         for f in image_files:
             f.close()
@@ -195,6 +204,8 @@ def run(args):
         print("error: no images returned", file=sys.stderr)
         sys.exit(1)
 
-    saved = save_b64_images(data_items, args.output_dir, ext=args.format)
+    saved = save_b64_images(
+        data_items, args.output_dir, ext=args.format, compression=args.compression
+    )
     for path in saved:
         print(path)
