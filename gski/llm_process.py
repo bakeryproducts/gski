@@ -6,11 +6,10 @@ from pathlib import Path
 from google import genai
 from google.genai import types
 
+from .models import GEMINI_TEXT
 
-MODELS = {
-    "flash": "gemini-3-flash-preview",
-    "pro": "gemini-3-pro-preview",
-}
+
+MODELS = {k: GEMINI_TEXT[k] for k in ("flash", "pro")}
 
 BINARY_MIMES = {
     "application/pdf",

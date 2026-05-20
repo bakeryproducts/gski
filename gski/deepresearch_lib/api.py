@@ -12,11 +12,7 @@ warnings.filterwarnings(
 
 from google import genai
 
-
-AGENT_MODELS = {
-    "default": "deep-research-preview-04-2026",
-    "max": "deep-research-max-preview-04-2026",
-}
+from ..models import GEMINI_DEEP_RESEARCH as AGENT_MODELS
 
 POLL_INTERVAL = 10
 
