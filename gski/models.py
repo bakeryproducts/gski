@@ -1,7 +1,7 @@
 GEMINI_TEXT = {
     "flash": "gemini-3.5-flash",
     "flash-lite": "gemini-3.1-flash-lite-preview",
-    "pro": "gemini-3-pro-preview",
+    "pro": "gemini-3.1-pro-preview"
 }
 
 GEMINI_IMAGE = {
