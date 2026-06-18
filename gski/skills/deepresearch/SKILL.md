@@ -98,7 +98,7 @@ Local state tracks the interaction chain: every plan/refine/execute step is reco
 ## Limits
 
 - Max research time: 60 minutes (most tasks finish within 20).
-- Do **not** launch multiple jobs in the same instant (e.g. parallel `start --no-wait`). Concurrent creates can return an interaction id that is never registered server-side, so later `status`/`wait` fail with a 400 `invalid_argument`. Start jobs one at a time.
+- **Known upstream bug:** long-running jobs can permanently break mid-run — `status`/`wait` start returning `400 invalid_request` ("Request contains an invalid argument") and the report becomes unrecoverable. This is a backend flakiness issue (sandbox timeout / interaction-id propagation failure), not a local bug; see the [Google AI dev forum thread](https://discuss.ai.google.dev/t/post-v1beta-interactions-succeeds-but-get-v1beta-interactions-id-returns-403-permission-denied-for-deep-research/129792). Short jobs are unaffected. Nothing local can recover a broken job — restart it.
 - Interactions API is in preview; expect occasional schema changes.
 - Local files are uploaded via `client.files.upload()` then referenced by URI.
 - Streaming thought summaries are not surfaced by this skill; only status transitions and the final report.
