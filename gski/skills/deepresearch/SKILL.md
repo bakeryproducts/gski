@@ -98,6 +98,7 @@ Local state tracks the interaction chain: every plan/refine/execute step is reco
 ## Limits
 
 - Max research time: 60 minutes (most tasks finish within 20).
+- Do **not** launch multiple jobs in the same instant (e.g. parallel `start --no-wait`). Concurrent creates can return an interaction id that is never registered server-side, so later `status`/`wait` fail with a 400 `invalid_argument`. Start jobs one at a time.
 - Interactions API is in preview; expect occasional schema changes.
 - Local files are uploaded via `client.files.upload()` then referenced by URI.
 - Streaming thought summaries are not surfaced by this skill; only status transitions and the final report.
