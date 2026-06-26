@@ -42,7 +42,7 @@ gski llm-process "prompt" --file FILE [--file FILE]... [--model flash|pro] [--sy
 gski nanobanana "prompt" [--image FILE]... [--model flash|pro] [--aspect-ratio RATIO] [--size 1K|2K|4K] [--search] [--output-dir DIR]
 gski nanoscope "prompt" --image FILE [--url URL]... [--model flash|pro] [--detect] [--segment] [--output-dir DIR]
 gski websearch "query" [--model flash|flash-lite] [--raw]
-gski youtube-scope <target> [--comments] [--transcript] [--limit N] [--archive FILE]
+gski youtube-scope <target> [--comments] [--transcript] [--limit N] [--archive FILE] [--audio] [--video] [--res N] [--audio-quality N] [--output-dir DIR] [--update]
 gski deepresearch start "query" [--file F]... [--max] [--plan] [--output FILE] [--no-wait]
 gski deepresearch list|status|wait|show|refine|approve|rm ...
 gski setup <target-dir>
