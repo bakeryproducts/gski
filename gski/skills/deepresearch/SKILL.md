@@ -20,11 +20,11 @@ Jobs have a `state`: `running`, `planning`, `completed`, `failed`.
 ## Commands
 
 ```bash
-# Fire-and-forget: start research, poll until done, save report
+# Fire-and-forget: start research, return immediately
 gski deepresearch start "compare EV battery chemistries in 2025"
 
-# Start and return immediately (come back later)
-gski deepresearch start "history of Google TPUs" --no-wait
+# Start and wait for it to finish (blocks)
+gski deepresearch start "history of Google TPUs" --wait
 
 # Resume polling (e.g. after terminal closed)
 gski deepresearch wait <job_id>
@@ -70,7 +70,7 @@ Job IDs can be given by any unique prefix (e.g. `a3f2` matches `a3f2c9b1`).
 | `--max` | off | use `deep-research-max-preview-04-2026` (more comprehensive, more expensive) |
 | `--plan` | off | collaborative planning mode — returns plan instead of executing |
 | `--output`, `-o` | — | write report to path (always also saved in state dir) |
-| `--no-wait` | off | return immediately after kicking off |
+| `--wait` | off | block until completion instead of returning immediately |
 
 ### `approve`
 
@@ -78,7 +78,7 @@ Job IDs can be given by any unique prefix (e.g. `a3f2` matches `a3f2c9b1`).
 |------|---------|-------|
 | `--message`, `-m` | "Plan looks good, proceed." | approval message to the agent |
 | `--output`, `-o` | — | write report to path |
-| `--no-wait` | off | don't block after approval |
+| `--wait` | off | block until completion after approval |
 
 ## Planning workflow
 

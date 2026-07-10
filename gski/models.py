@@ -15,6 +15,10 @@ GEMINI_DEEP_RESEARCH = {
     "max": "deep-research-max-preview-04-2026",
 }
 
+GEMINI_OMNI = {
+    "flash": "gemini-omni-flash-preview",
+}
+
 OPENAI_IMAGE = [
     "gpt-image-2",
     "gpt-image-1.5",
