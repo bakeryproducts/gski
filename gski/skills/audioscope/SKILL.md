@@ -7,7 +7,7 @@ description: Transcribe and diarize audio — speech-to-text, speaker identifica
 
 `gski audioscope` sends audio files or YouTube URLs to Gemini and returns transcriptions. Supports speaker diarization (who said what) and timestamped segments via structured output.
 
-Default model is `gemini-3.6-flash`.
+Default model is `gemini-3.7-flash`.
 
 Files under 15 MB are sent inline. Larger files are uploaded via the Files API automatically.
 
@@ -43,7 +43,7 @@ gski audioscope --audio part1.mp3 --audio part2.mp3 --diarize
 | `prompt` | positional, optional | auto-selected | overrides default prompt |
 | `--audio FILE` | repeatable | none | local audio file(s) |
 | `--youtube URL` | repeatable | none | YouTube URL(s) |
-| `--model` | `flash`, `pro` | `flash` | model selection |
+| `--model` | `flash` | `flash` | model selection |
 | `--diarize` | flag | off | speaker identification (JSON output) |
 | `--timestamps` | flag | off | add MM:SS timestamps to segments |
 | `--output-dir` | path | `./output` | where to save output files |

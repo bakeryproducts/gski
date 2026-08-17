@@ -7,7 +7,7 @@ description: Process files and data with Gemini — extract, transform, summariz
 
 `gski llm-process` sends files and a prompt to Gemini for processing. Accepts any combination of local files and stdin. PDFs and images are sent as binary parts with native vision; text files are inlined with filenames as headers.
 
-Default model is `gemini-3.6-flash`.
+Default model is `gemini-3.7-flash`.
 
 ## Commands
 
@@ -30,9 +30,6 @@ gski llm-process "clean this data" -f raw.csv --system "output as CSV, no markdo
 # JSON output
 gski llm-process "extract names and dates" -f contract.pdf --json
 
-# Use pro model
-gski llm-process "deep analysis" -f paper.pdf --model pro
-
 # Disable thinking for faster response
 gski llm-process "list all functions" -f app.py --no-think
 ```
@@ -42,7 +39,7 @@ gski llm-process "list all functions" -f app.py --no-think
 | Flag | Short | Values | Default | Notes |
 |------|-------|--------|---------|-------|
 | `--file` | `-f` | path | — | input file, repeatable |
-| `--model` | `-m` | `flash`, `pro` | `flash` | model selection |
+| `--model` | `-m` | `flash` | `flash` | model selection |
 | `--system` | `-s` | text | — | system instruction |
 | `--json` | — | flag | off | request JSON output |
 | `--no-think` | — | flag | off | disable reasoning |
