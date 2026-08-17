@@ -117,7 +117,7 @@ def register(subparsers):
         "--model",
         choices=list(MODELS.keys()),
         default="flash3",
-        help="model to use (default: flash)",
+        help="model to use (default: flash3)",
     )
     p.add_argument(
         "--aspect-ratio",

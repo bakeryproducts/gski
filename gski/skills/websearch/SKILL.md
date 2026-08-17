@@ -3,12 +3,6 @@ name: gski websearch
 description: Search the web using Google Search via Gemini grounding — current events, facts, documentation
 ---
 
-## Setup
-
-Check: `which gski`
-Install if missing: `pip install -e .` from `~/Documents/gski`
-Requires `GEMINI_API_KEY` env var.
-
 ## How it works
 
 `gski websearch` sends a query to Gemini with Google Search grounding enabled. The model searches the web, synthesizes results, and returns text with inline citation references and resolved source URLs.

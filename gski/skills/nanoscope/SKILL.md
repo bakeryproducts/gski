@@ -3,12 +3,6 @@ name: gski nanoscope
 description: Understand and analyze images — captioning, comparison, object detection, segmentation
 ---
 
-## Setup
-
-Check: `which gski`
-Install if missing: `pip install gski` (from the gski repo)
-Requires `GEMINI_API_KEY` env var.
-
 ## How it works
 
 `gski nanoscope` sends images + a text prompt to Gemini's multimodal models and returns text or structured analysis. Unlike nanobanana (which generates images), nanoscope analyzes existing images.

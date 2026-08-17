@@ -3,11 +3,6 @@ name: gski tgscope
 description: Search, read, and summarize Telegram chat/channel JSON exports — find posts, read full messages, get overviews, and produce a structured digest of a whole channel
 ---
 
-## Setup
-
-Check: `which gski`
-Install if missing: `pip install -e .` from the gski repo.
-
 ## How it works
 
 Telegram Desktop exports a channel or chat as a single large `result.json` (inside a `ChatExport_*` folder). The raw file is awkward to read directly — **do not read it raw**. `gski tgscope` wraps it so you can search and read messages without loading the whole thing into context.

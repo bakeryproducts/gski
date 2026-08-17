@@ -3,12 +3,6 @@ name: gski omni
 description: Gemini Omni Flash — stateful video generation and editing from text, images, or video
 ---
 
-## Setup
-
-Check: `which gski`
-Install if missing: `pip install -e .` from `~/Documents/gski`
-Requires `GEMINI_API_KEY` env var.
-
 ## How it works
 
 Gemini Omni Flash (`gemini-omni-flash-preview`) generates video with audio from text, images, or a source video, and edits it conversationally. This skill wraps the Interactions API with local job tracking so multi-turn edits survive disconnects.

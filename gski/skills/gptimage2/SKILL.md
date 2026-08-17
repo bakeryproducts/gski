@@ -1,13 +1,7 @@
 ---
 name: gski gptimage2
-description: Generate and edit images with OpenAI GPT Image (gpt-image-2)
+description: Generate and edit images with OpenAI GPT Image (gpt-image-2). Use ONLY when explicitly asked to use GPT Image or OpenAI for image generation.
 ---
-
-## Setup
-
-Check: `which gski`
-Install if missing: `pip install gski` (from the gski repo)
-Requires `OPENAI_API_KEY` env var and the `openai` package.
 
 ## How it works
 
