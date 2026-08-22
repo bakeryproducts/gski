@@ -38,6 +38,7 @@ def _finish(job, client, interaction, output):
 
     if output:
         out = Path(output)
+        out.parent.mkdir(parents=True, exist_ok=True)
         out.write_bytes(internal.read_bytes())
         print(out)
     else:
@@ -53,10 +54,11 @@ def cmd_generate(args):
     model = MODELS["flash"]
 
     user_input = build_input(args.prompt, args.image, args.video, client)
+    is_async = getattr(args, "async_mode", False) and not args.wait
     kwargs = {
         "model": model,
         "input": user_input,
-        "background": True,
+        "background": is_async,
         "store": True,
         "response_format": build_response_format(args.aspect_ratio),
     }
@@ -73,44 +75,56 @@ def cmd_generate(args):
 
     print(f"job:         {job['job_id']}")
     print(f"interaction: {iid}")
-    print(f"state:       {job['state']}")
 
-    if not args.wait:
+    if is_async:
+        print(f"state:       {job['state']}")
         _resume_hint(job["job_id"])
         return
 
-    result = poll(client, iid)
-    _finish(job, client, result, args.output)
+    status = getattr(interaction, "status", None)
+    if status == "failed":
+        err = getattr(interaction, "error", "unknown error")
+        print(f"error: generation failed: {err}", file=sys.stderr)
+        sys.exit(2)
+
+    _finish(job, client, interaction, args.output)
 
 
 def cmd_edit(args):
     job = load_job(args.id)
     client = make_client()
+    is_async = getattr(args, "async_mode", False) and not args.wait
 
     interaction = interactions_create(
         client,
         model=job["model"],
         input=args.prompt,
         previous_interaction_id=job["current_interaction_id"],
-        background=True,
+        background=is_async,
         store=True,
         response_format=build_response_format(args.aspect_ratio),
     )
     iid = new_interaction_id(interaction)
     record_interaction(job, iid, "edit", args.prompt)
-    job["state"] = "running"
     save_job(job)
 
     print(f"job:         {job['job_id']}")
     print(f"interaction: {iid}")
-    print(f"state:       running")
 
-    if not args.wait:
+    if is_async:
+        job["state"] = "running"
+        save_job(job)
+        print(f"state:       running")
         _resume_hint(job["job_id"])
         return
 
-    result = poll(client, iid)
-    _finish(job, client, result, args.output)
+    status = getattr(interaction, "status", None)
+    if status == "failed":
+        err = getattr(interaction, "error", "unknown error")
+        print(f"error: generation failed: {err}", file=sys.stderr)
+        sys.exit(2)
+
+    _finish(job, client, interaction, args.output)
 
 
 def cmd_list(args):
@@ -206,7 +220,10 @@ def register(subparsers):
     )
     gen.add_argument("--output", "-o", help="also write the video to this path")
     gen.add_argument(
-        "--wait", action="store_true", help="block until the video is ready"
+        "--wait", action="store_true", default=True, help="wait for video to be ready (default)"
+    )
+    gen.add_argument(
+        "--async", dest="async_mode", action="store_true", help="run asynchronously in background"
     )
     gen.set_defaults(func=cmd_generate)
 
@@ -217,7 +234,12 @@ def register(subparsers):
         "--aspect-ratio", choices=ASPECT_RATIOS, metavar="RATIO", help="output aspect ratio"
     )
     edit.add_argument("--output", "-o", help="also write the video to this path")
-    edit.add_argument("--wait", action="store_true", help="block until the video is ready")
+    edit.add_argument(
+        "--wait", action="store_true", default=True, help="wait for video to be ready (default)"
+    )
+    edit.add_argument(
+        "--async", dest="async_mode", action="store_true", help="run asynchronously in background"
+    )
     edit.set_defaults(func=cmd_edit)
 
     lst = sp.add_parser("list", help="list tracked jobs")

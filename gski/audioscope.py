@@ -92,13 +92,16 @@ def default_prompt(args):
 
 
 def build_config(args):
-    if not args.diarize:
-        return None
-    schema = DIARIZE_TS_SCHEMA if args.timestamps else DIARIZE_SCHEMA
-    return types.GenerateContentConfig(
-        response_mime_type="application/json",
-        response_schema=schema,
-    )
+    kwargs = {
+        "automatic_function_calling": types.AutomaticFunctionCallingConfig(
+            disable=True
+        )
+    }
+    if args.diarize:
+        schema = DIARIZE_TS_SCHEMA if args.timestamps else DIARIZE_SCHEMA
+        kwargs["response_mime_type"] = "application/json"
+        kwargs["response_schema"] = schema
+    return types.GenerateContentConfig(**kwargs)
 
 
 def build_contents(prompt, audio_paths, youtube_urls):

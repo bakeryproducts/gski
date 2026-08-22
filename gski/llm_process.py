@@ -62,7 +62,11 @@ def build_contents(prompt, file_paths, stdin_data):
 
 
 def build_config(args):
-    kwargs = {}
+    kwargs = {
+        "automatic_function_calling": types.AutomaticFunctionCallingConfig(
+            disable=True
+        )
+    }
 
     if args.system:
         kwargs["system_instruction"] = args.system
@@ -73,8 +77,6 @@ def build_config(args):
     if args.no_think:
         kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
 
-    if not kwargs:
-        return None
     return types.GenerateContentConfig(**kwargs)
 
 

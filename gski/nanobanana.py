@@ -26,7 +26,11 @@ SIZES = ["1K", "2K", "4K"]
 
 
 def build_config(args):
-    kwargs = {}
+    kwargs = {
+        "automatic_function_calling": types.AutomaticFunctionCallingConfig(
+            disable=True
+        )
+    }
 
     if args.model == "pro":
         kwargs["response_modalities"] = ["TEXT", "IMAGE"]
@@ -43,8 +47,6 @@ def build_config(args):
     if args.search:
         kwargs["tools"] = [{"google_search": {}}]
 
-    if not kwargs:
-        return None
     return types.GenerateContentConfig(**kwargs)
 
 

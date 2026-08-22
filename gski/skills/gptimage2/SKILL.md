@@ -34,6 +34,7 @@ gski gptimage2 "replace the pool" --image room.png --mask mask.png   # masked ed
 | `--background` | `auto`, `opaque` | `auto` | gpt-image-2 does not support transparent |
 | `-n N` | integer | `1` | number of images |
 | `--output-dir` | path | `./output` | |
+| `-o`, `--output` | path | none | exact output file path; overrides `--output-dir` and auto-naming |
 
 ## Mask requirements
 
