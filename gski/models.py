@@ -16,7 +16,7 @@ GEMINI_DEEP_RESEARCH = {
 }
 
 GEMINI_OMNI = {
-    "flash": "gemini-omni-flash-preview",
+    "flash": "gemini-omni-1.1-flash",
 }
 
 OPENAI_IMAGE = [
