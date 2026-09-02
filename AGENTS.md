@@ -40,6 +40,8 @@ gski/
         │   └── SKILL.md
         ├── websearch/
         │   └── SKILL.md
+        ├── wordsmith/          # prompt-only, no CLI
+        │   └── SKILL.md
         └── youtube-scope/
             └── SKILL.md
 ```

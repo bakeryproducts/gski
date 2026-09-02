@@ -137,6 +137,28 @@ is the default.
      }
     }'
 
+### Control duration
+
+Control the output duration of your generated video using the `duration` parameter in `response_format`. Supported values are strings from `"3s"` to `"10s"` (default is ~10s).
+
+### Python
+
+    import base64
+    from google import genai
+
+    client = genai.Client()
+
+    interaction = client.interactions.create(
+        model="gemini-omni-1.1-flash",
+        input="A drone shot of a mountain landscape at sunrise.",
+        response_format={
+            "type": "video",
+            "duration": "4s",
+        },
+    )
+    with open("short.mp4", "wb") as f:
+        f.write(base64.b64decode(interaction.output_video.data))
+
 ### Output resolution
 
 Control the output resolution of your generated video using the `resolution`

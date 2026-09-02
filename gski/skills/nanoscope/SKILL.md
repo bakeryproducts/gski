@@ -7,7 +7,7 @@ description: Understand and analyze images — captioning, comparison, object de
 
 `gski nanoscope` sends images + a text prompt to Gemini's multimodal models and returns text or structured analysis. Unlike nanobanana (which generates images), nanoscope analyzes existing images.
 
-Default model is `gemini-3.7-flash`.
+Default model is `gemini-3.8-flash`.
 
 ## Commands
 

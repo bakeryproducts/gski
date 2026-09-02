@@ -77,7 +77,9 @@ def cmd_generate(args):
         "background": is_async,
         "store": True,
         "stream": False,
-        "response_format": build_response_format(args.aspect_ratio, args.resolution),
+        "response_format": build_response_format(
+            args.aspect_ratio, args.resolution, args.duration
+        ),
     }
     gen_config = build_generation_config(args.task)
     if gen_config:
@@ -91,6 +93,7 @@ def cmd_generate(args):
         model=model,
         aspect_ratio=args.aspect_ratio,
         resolution=args.resolution,
+        duration=args.duration,
     )
     record_interaction(job, iid, "generate", args.prompt)
     save_job(job)
@@ -118,6 +121,7 @@ def _follow_up(args, kind):
     )
     aspect_ratio = args.aspect_ratio or job.get("aspect_ratio") or "9:16"
     resolution = args.resolution or job.get("resolution") or "720p"
+    duration = getattr(args, "duration", None) or job.get("duration")
 
     interaction = interactions_create(
         client,
@@ -127,12 +131,14 @@ def _follow_up(args, kind):
         background=is_async,
         store=True,
         stream=False,
-        response_format=build_response_format(aspect_ratio, resolution),
+        response_format=build_response_format(aspect_ratio, resolution, duration),
     )
     iid = new_interaction_id(interaction)
     record_interaction(job, iid, kind, args.prompt)
     job["aspect_ratio"] = aspect_ratio
     job["resolution"] = resolution
+    if duration:
+        job["duration"] = duration
     save_job(job)
 
     print(f"job:         {job['job_id']}")
@@ -248,6 +254,10 @@ def _add_output_options(parser, default_aspect=None, default_resolution=None):
         default=default_resolution,
         help="output resolution"
         + (f" (default: {default_resolution})" if default_resolution else ""),
+    )
+    parser.add_argument(
+        "--duration",
+        help="clip duration (e.g. 4s, 5s, 10s; range 3s-10s)",
     )
     parser.add_argument("--output", "-o", help="also write the video to this path")
     mode = parser.add_mutually_exclusive_group()

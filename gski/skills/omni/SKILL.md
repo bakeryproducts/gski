@@ -7,14 +7,14 @@ description: Generate, edit, interpolate, and extend videos with audio using Gem
 
 Use `gski omni` for video work. It uses `gemini-omni-1.1-flash` and keeps jobs stateful for follow-up edits and extensions. Generation waits by default; add `--async` only when background execution is wanted, then use `wait`.
 
-Defaults: `9:16`, `720p`. Use `--aspect-ratio 16:9` or `--resolution 360p|1080p|4k` to override. Higher resolutions are upscaled.
+Defaults: `9:16`, `720p`. Use `--aspect-ratio 16:9`, `--resolution 360p|1080p|4k`, or `--duration 3s..10s` to override. Higher resolutions are upscaled.
 
 ## Commands
 
 ```bash
-gski omni generate "PROMPT" [--image FILE]... [--video FILE]... [-o FILE]
-gski omni edit JOB "ONE CHANGE" [--image FILE]... [--video FILE]... [-o FILE]
-gski omni extend JOB ["CONTINUATION"] [--image FILE]... [--video FILE]... [-o FILE]
+gski omni generate "PROMPT" [--image FILE]... [--video FILE]... [--duration 3s-10s] [-o FILE]
+gski omni edit JOB "ONE CHANGE" [--image FILE]... [--video FILE]... [--duration 3s-10s] [-o FILE]
+gski omni extend JOB ["CONTINUATION"] [--image FILE]... [--video FILE]... [--duration 3s-10s] [-o FILE]
 
 gski omni wait JOB [-o FILE]
 gski omni status JOB

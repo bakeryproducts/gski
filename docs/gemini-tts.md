@@ -289,7 +289,7 @@ then pass that transcript to the TTS model to read aloud.
     client = genai.Client()
 
     transcript_interaction = client.interactions.create(
-       model="gemini-3.7-flash",
+       model="gemini-3.8-flash",
        input="""Generate a short transcript around 100 words that reads
                 like it was clipped from a podcast by excited herpetologists.
                 The hosts names are Dr. Anya and Liam."""
@@ -317,7 +317,7 @@ then pass that transcript to the TTS model to read aloud.
     async function main() {
 
     const transcriptInteraction = await client.interactions.create({
-       model: "gemini-3.7-flash",
+       model: "gemini-3.8-flash",
        input: "Generate a short transcript around 100 words that reads like it was clipped from a podcast by excited herpetologists. The hosts names are Dr. Anya and Liam.",
        })
 

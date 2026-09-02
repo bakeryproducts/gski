@@ -7,7 +7,7 @@ description: Process files and data with Gemini — extract, transform, summariz
 
 `gski llm-process` sends files and a prompt to Gemini for processing. Accepts any combination of local files and stdin. PDFs and images are sent as binary parts with native vision; text files are inlined with filenames as headers.
 
-Default model is `gemini-3.7-flash`.
+Default model is `gemini-3.8-flash`.
 
 ## Commands
 

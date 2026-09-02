@@ -59,10 +59,15 @@ def build_input(prompt, images, videos, client):
     return parts
 
 
-def build_response_format(aspect_ratio, resolution):
+def build_response_format(aspect_ratio, resolution, duration=None):
     fmt = {"type": "video", "delivery": "uri", "resolution": resolution}
     if aspect_ratio:
         fmt["aspect_ratio"] = aspect_ratio
+    if duration:
+        d = str(duration).strip()
+        if d.isdigit():
+            d = f"{d}s"
+        fmt["duration"] = d
     return fmt
 
 
