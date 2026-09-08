@@ -49,7 +49,7 @@ gski/
 ## CLI
 
 ```
-gski gptimage2 "prompt" [--image FILE]... [--mask FILE] [--model gpt-image-2|...] [--size WxH|auto] [--quality auto|low|medium|high] [--format jpg|png|webp] [--compression N] [--background auto|opaque] [-n N] [--output-dir DIR]
+gski gptimage2 "prompt" [--image FILE]... [--mask FILE] [--model gpt-image-2.5-flare|...] [--size WxH|auto] [--quality high|low|medium|xhigh|max|auto] [--format jpg|png|webp] [--compression N] [--background auto|opaque|transparent] [-n N] [--output-dir DIR]
 gski llm-process "prompt" --file FILE [--file FILE]... [--model flash|pro] [--system TEXT] [--json] [--no-think]
 gski nanobanana "prompt" [--image FILE]... [--model flash3|flash2] [--aspect-ratio RATIO] [--size 1K|2K|4K] [--search] [--output-dir DIR]
 gski nanoscope "prompt" --image FILE [--url URL]... [--model flash|pro] [--detect] [--segment] [--output-dir DIR]

@@ -2,6 +2,27 @@ import argparse
 import sys
 
 import argcomplete
+import httpx
+from google.genai import errors as genai_errors
+import openai
+
+
+def _format_genai_error(e: genai_errors.APIError) -> str:
+    status = getattr(e, "status", None)
+    code = getattr(e, "code", None)
+    msg = getattr(e, "message", None)
+    prefix = " ".join(str(p) for p in [code, status] if p)
+    if prefix and msg:
+        return f"{prefix}: {msg}"
+    return prefix or msg or str(e)
+
+
+def _format_openai_error(e: openai.OpenAIError) -> str:
+    code = getattr(e, "code", None) or getattr(e, "status_code", None)
+    msg = getattr(e, "message", None) or str(e)
+    if code and str(code) not in str(msg):
+        return f"{code}: {msg}"
+    return str(msg)
 
 
 def main():
@@ -43,4 +64,16 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    args.func(args)
+    try:
+        args.func(args)
+    except KeyboardInterrupt:
+        sys.exit(130)
+    except genai_errors.APIError as e:
+        print(f"error: {_format_genai_error(e)}", file=sys.stderr)
+        sys.exit(1)
+    except openai.OpenAIError as e:
+        print(f"error: {_format_openai_error(e)}", file=sys.stderr)
+        sys.exit(1)
+    except httpx.HTTPError as e:
+        print(f"error: {e}", file=sys.stderr)
+        sys.exit(1)

@@ -85,7 +85,7 @@ def save_images(response, output_dir, ext="jpg", output=None):
         stem = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         suffix = ext
 
-    for part in response.parts:
+    for part in (response.parts or []):
         if part.thought:
             continue
         if part.text is not None:

@@ -20,6 +20,8 @@ GEMINI_OMNI = {
 }
 
 OPENAI_IMAGE = [
+    "gpt-image-2.5-flare",
+    "gpt-image-2.5-sunburst",
     "gpt-image-2",
     "gpt-image-1.5",
     "gpt-image-1",
