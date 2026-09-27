@@ -3,13 +3,22 @@ import os
 import sys
 from pathlib import Path
 
-from google import genai
-from google.genai import types
-
 from .models import GEMINI_TEXT
 
 
 MODELS = {k: GEMINI_TEXT[k] for k in ("flash", "pro")}
+
+genai = None
+types = None
+
+
+def _init_genai():
+    global genai, types
+    if genai is None:
+        from google import genai as _genai
+        from google.genai import types as _types
+        genai = _genai
+        types = _types
 
 BINARY_MIMES = {
     "application/pdf",
@@ -120,6 +129,8 @@ def run(args):
     if not os.environ.get("GEMINI_API_KEY"):
         print("error: GEMINI_API_KEY env var required", file=sys.stderr)
         sys.exit(1)
+
+    _init_genai()
 
     stdin_data = None
     if not sys.stdin.isatty():

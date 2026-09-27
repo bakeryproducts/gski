@@ -4,9 +4,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from google import genai
-from google.genai import types
-
 from .models import GEMINI_TEXT
 
 
@@ -32,53 +29,48 @@ PROMPT_DIARIZE_TS = (
     "Provide accurate timestamps for each segment in MM:SS format."
 )
 
-DIARIZE_SCHEMA = types.Schema(
-    type=types.Type.OBJECT,
-    properties={
-        "summary": types.Schema(
-            type=types.Type.STRING,
-            description="A concise summary of the audio content.",
-        ),
-        "segments": types.Schema(
-            type=types.Type.ARRAY,
-            description="List of transcribed segments.",
-            items=types.Schema(
-                type=types.Type.OBJECT,
-                properties={
-                    "speaker": types.Schema(type=types.Type.STRING),
-                    "timestamp": types.Schema(type=types.Type.STRING),
-                    "content": types.Schema(type=types.Type.STRING),
-                },
-                required=["speaker", "content"],
-            ),
-        ),
-    },
-    required=["summary", "segments"],
-)
+genai = None
+types = None
 
-DIARIZE_TS_SCHEMA = types.Schema(
-    type=types.Type.OBJECT,
-    properties={
-        "summary": types.Schema(
-            type=types.Type.STRING,
-            description="A concise summary of the audio content.",
-        ),
-        "segments": types.Schema(
-            type=types.Type.ARRAY,
-            description="List of transcribed segments with timestamps.",
-            items=types.Schema(
-                type=types.Type.OBJECT,
-                properties={
-                    "speaker": types.Schema(type=types.Type.STRING),
-                    "timestamp": types.Schema(type=types.Type.STRING),
-                    "content": types.Schema(type=types.Type.STRING),
-                },
-                required=["speaker", "timestamp", "content"],
+
+def _init_deps():
+    global genai, types
+    if genai is None:
+        from google import genai as _genai
+        from google.genai import types as _types
+
+        genai = _genai
+        types = _types
+
+
+def _diarize_schema(timestamps=False):
+    _init_deps()
+    item_props = {
+        "speaker": types.Schema(type=types.Type.STRING),
+        "timestamp": types.Schema(type=types.Type.STRING),
+        "content": types.Schema(type=types.Type.STRING),
+    }
+    required = ["speaker", "timestamp", "content"] if timestamps else ["speaker", "content"]
+    desc = "List of transcribed segments with timestamps." if timestamps else "List of transcribed segments."
+    return types.Schema(
+        type=types.Type.OBJECT,
+        properties={
+            "summary": types.Schema(
+                type=types.Type.STRING,
+                description="A concise summary of the audio content.",
             ),
-        ),
-    },
-    required=["summary", "segments"],
-)
+            "segments": types.Schema(
+                type=types.Type.ARRAY,
+                description=desc,
+                items=types.Schema(
+                    type=types.Type.OBJECT,
+                    properties=item_props,
+                    required=required,
+                ),
+            ),
+        },
+        required=["summary", "segments"],
+    )
 
 
 def default_prompt(args):
@@ -92,15 +84,15 @@ def default_prompt(args):
 
 
 def build_config(args):
+    _init_deps()
     kwargs = {
         "automatic_function_calling": types.AutomaticFunctionCallingConfig(
             disable=True
         )
     }
     if args.diarize:
-        schema = DIARIZE_TS_SCHEMA if args.timestamps else DIARIZE_SCHEMA
         kwargs["response_mime_type"] = "application/json"
-        kwargs["response_schema"] = schema
+        kwargs["response_schema"] = _diarize_schema(args.timestamps)
     return types.GenerateContentConfig(**kwargs)
 
 
@@ -226,6 +218,8 @@ def run(args):
     if not os.environ.get("GEMINI_API_KEY"):
         print("error: GEMINI_API_KEY env var required", file=sys.stderr)
         sys.exit(1)
+
+    _init_deps()
 
     prompt = args.prompt or default_prompt(args)
     client = genai.Client()

@@ -2,9 +2,6 @@ import os
 import sys
 import urllib.request
 
-from google import genai
-from google.genai import types
-
 from .models import GEMINI_TEXT
 
 
@@ -81,6 +78,9 @@ def run(args):
     if not os.environ.get("GEMINI_API_KEY"):
         print("error: GEMINI_API_KEY env var required", file=sys.stderr)
         sys.exit(1)
+
+    from google import genai
+    from google.genai import types
 
     client = genai.Client()
     model = MODELS[args.model]

@@ -19,6 +19,10 @@ GEMINI_OMNI = {
     "flash": "gemini-omni-1.1-flash",
 }
 
+GEMINI_OMNI_VERTEX = {
+    "flash": "gemini-omni-flash-preview",
+}
+
 OPENAI_IMAGE = [
     "gpt-image-2.5-flare",
     "gpt-image-2.5-sunburst",

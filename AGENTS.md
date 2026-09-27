@@ -14,6 +14,8 @@ gski/
     ├── llm_process.py      # gski llm-process — process files/data with Gemini
     ├── nanobanana.py       # gski nanobanana — Gemini image gen/edit
     ├── nanoscope.py        # gski nanoscope — Gemini image understanding
+    ├── ocq.py              # gski ocq — orchestrate opencode worker sessions (ledger in .ocq/)
+    ├── ocq_lib/            # ocq API, ledger folding/math, dashboard server & static web assets
     ├── omni.py             # gski omni — Gemini Omni Flash video gen/edit (stateful jobs)
     ├── omni_lib/           # omni job state, interactions/video plumbing
     ├── tgscope.py          # gski tgscope — search/read Telegram chat JSON exports
@@ -31,6 +33,8 @@ gski/
         ├── nanobanana/
         │   └── SKILL.md
         ├── nanoscope/
+        │   └── SKILL.md
+        ├── ocq/
         │   └── SKILL.md
         ├── omni/
         │   └── SKILL.md
@@ -53,10 +57,18 @@ gski gptimage2 "prompt" [--image FILE]... [--mask FILE] [--model gpt-image-2.5-f
 gski llm-process "prompt" --file FILE [--file FILE]... [--model flash|pro] [--system TEXT] [--json] [--no-think]
 gski nanobanana "prompt" [--image FILE]... [--model flash3|flash2] [--aspect-ratio RATIO] [--size 1K|2K|4K] [--search] [--output-dir DIR]
 gski nanoscope "prompt" --image FILE [--url URL]... [--model flash|pro] [--detect] [--segment] [--output-dir DIR]
-gski omni generate "prompt" [--image FILE]... [--video FILE]... [--aspect-ratio 16:9|9:16] [--resolution 360p|720p|1080p|4k] [--task text_to_video|image_to_video|reference_to_video|edit|extend] [--output FILE] [--async]
+gski omni generate "prompt" [--image FILE]... [--video FILE]... [--aspect-ratio 16:9|9:16] [--resolution 360p|720p|1080p|4k] [--task text_to_video|image_to_video|reference_to_video|edit|extend] [--backend api|vertex] [--output FILE] [--async]
 gski omni edit <job-id> "prompt" [--image FILE]... [--video FILE]... [--aspect-ratio 16:9|9:16] [--resolution 360p|720p|1080p|4k] [--output FILE] [--async]
 gski omni extend <job-id> ["prompt"] [--image FILE]... [--video FILE]... [--output FILE] [--async]
 gski omni list|status|wait|show|rm ...
+gski ocq serve [--port 4096]
+gski ocq init RUN [--agent A] [--model provider/model] [--variant V] [--concurrency N]
+gski ocq add RUN ["task"]... [--file F|-] [--deps IDS]
+gski ocq ls | ledger RUN [--status S...] [--all]
+gski ocq spawn RUN [ID...] [--allow 'perm:pattern']... [--agent A] [--model M] [--variant V]
+gski ocq wait-any RUN [--timeout S] | result RUN ID
+gski ocq done|fail RUN ID... [--note] | retry RUN ID... [--feedback] | abort RUN [ID...]
+gski ocq dash [--port 4097]   # read-only web dashboard; projects registry in ~/.local/state/ocq/projects
 gski tgscope info|search|show <export-dir-or-result.json> ...
   search "query" [--regex] [--case-sensitive] [--since YYYY-MM-DD] [--until YYYY-MM-DD] [--media KIND] [--min-reactions N] [--limit N] [--width N] [--json]
   show <ids> [--context N] [--json]   # ids: 12 | 12,15 | 10-20
@@ -83,6 +95,7 @@ gski setup <target-dir>
 - Requires `OPENAI_API_KEY` env var for gptimage2
 - Requires `ELEVENLABS_API_KEY` env var for voiceover (accepts `ELEVEN_LABS_API_KEY`)
 - Requires `yt-dlp` for youtube-scope
+- Vertex backend (`gski omni --backend vertex`) reads a service account json from `~/.config/gski/gemcred.json`
 
 ## Install
 

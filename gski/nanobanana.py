@@ -4,10 +4,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-from google import genai
-from google.genai import types
-from PIL import Image
-
 from .models import GEMINI_IMAGE as MODELS
 
 ASPECT_RATIOS = [
@@ -23,6 +19,22 @@ ASPECT_RATIOS = [
     "21:9",
 ]
 SIZES = ["1K", "2K", "4K"]
+
+genai = None
+types = None
+Image = None
+
+
+def _init_deps():
+    global genai, types, Image
+    if genai is None:
+        from google import genai as _genai
+        from google.genai import types as _types
+        from PIL import Image as _Image
+
+        genai = _genai
+        types = _types
+        Image = _Image
 
 
 def build_config(args):
@@ -169,6 +181,8 @@ def run(args):
     if not os.environ.get("GEMINI_API_KEY"):
         print("error: GEMINI_API_KEY env var required", file=sys.stderr)
         sys.exit(1)
+
+    _init_deps()
 
     client = genai.Client()
     model = MODELS[args.model]

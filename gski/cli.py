@@ -2,12 +2,9 @@ import argparse
 import sys
 
 import argcomplete
-import httpx
-from google.genai import errors as genai_errors
-import openai
 
 
-def _format_genai_error(e: genai_errors.APIError) -> str:
+def _format_genai_error(e) -> str:
     status = getattr(e, "status", None)
     code = getattr(e, "code", None)
     msg = getattr(e, "message", None)
@@ -17,7 +14,7 @@ def _format_genai_error(e: genai_errors.APIError) -> str:
     return prefix or msg or str(e)
 
 
-def _format_openai_error(e: openai.OpenAIError) -> str:
+def _format_openai_error(e) -> str:
     code = getattr(e, "code", None) or getattr(e, "status_code", None)
     msg = getattr(e, "message", None) or str(e)
     if code and str(code) not in str(msg):
@@ -35,6 +32,7 @@ def main():
     from gski.llm_process import register as lp_register
     from gski.nanobanana import register as nb_register
     from gski.nanoscope import register as ns_register
+    from gski.ocq import register as ocq_register
     from gski.omni import register as omni_register
     from gski.setup import register as setup_register
     from gski.tgscope import register as tg_register
@@ -49,6 +47,7 @@ def main():
     lp_register(sub)
     nb_register(sub)
     ns_register(sub)
+    ocq_register(sub)
     omni_register(sub)
     setup_register(sub)
     tg_register(sub)
@@ -68,12 +67,20 @@ def main():
         args.func(args)
     except KeyboardInterrupt:
         sys.exit(130)
-    except genai_errors.APIError as e:
-        print(f"error: {_format_genai_error(e)}", file=sys.stderr)
-        sys.exit(1)
-    except openai.OpenAIError as e:
-        print(f"error: {_format_openai_error(e)}", file=sys.stderr)
-        sys.exit(1)
-    except httpx.HTTPError as e:
-        print(f"error: {e}", file=sys.stderr)
-        sys.exit(1)
+    except Exception as e:
+        if "google.genai" in sys.modules:
+            from google.genai import errors as genai_errors
+            if isinstance(e, genai_errors.APIError):
+                print(f"error: {_format_genai_error(e)}", file=sys.stderr)
+                sys.exit(1)
+        if "openai" in sys.modules:
+            import openai
+            if isinstance(e, openai.OpenAIError):
+                print(f"error: {_format_openai_error(e)}", file=sys.stderr)
+                sys.exit(1)
+        if "httpx" in sys.modules:
+            import httpx
+            if isinstance(e, httpx.HTTPError):
+                print(f"error: {e}", file=sys.stderr)
+                sys.exit(1)
+        raise
