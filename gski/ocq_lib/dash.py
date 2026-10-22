@@ -5,7 +5,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from gski.ocq_lib.api import DEFAULT_DASH_PORT, activity, active, fetch, last_text, messages, session_info
+from gski.ocq_lib.api import DEFAULT_DASH_PORT, activity, active, fetch, last_text, messages, session_info, shells
 from gski.ocq_lib.ledger import cut, fold, known_projects, project_root, remember, sum_tokens
 
 WEB_DIR = Path(__file__).parent / "web"
@@ -108,6 +108,7 @@ def run_detail(root, name):
             "worker": t.get("worker"),
             "artifact": t.get("artifact"),
             "note": cut(t.get("note"), 300),
+            "ping": t.get("ping"),
             "task": cut(t.get("task"), 300),
             "started": t.get("started"),
             "finished": t.get("finished"),
@@ -123,6 +124,11 @@ def run_detail(root, name):
             r["cost"] = round(r["cost"] + info.pop("cost"), 4)
             r["tokens"] = sum_tokens([r["tokens"], info.pop("tokens")])
             r.update(info)
+            if r["live"] == "idle":
+                bg = shells(t["session"], root) or []
+                if bg:
+                    r["live"] = "waiting"
+                    r["activity"] = f"waiting on {len(bg)} background job(s): {bg[0]['command'][:160]}"
         elif not r["tokens"] and t.get("session") and t["status"] != "pending" and live is not None:
             r["tokens"] = finished_tokens(t["session"], root)
         rows.append(r)
@@ -145,7 +151,7 @@ def task_detail(root, name, tid):
     reply = ""
     if t.get("session"):
         reply = last_text(messages(t["session"], timeout=10))[:4000]
-    keys = ("id", "status", "attempts", "task", "worker", "artifact", "note", "feedback", "denied", "session", "cost", "tokens")
+    keys = ("id", "status", "attempts", "task", "worker", "artifact", "note", "ping", "feedback", "denied", "session", "cost", "tokens")
     d = {k: t.get(k) for k in keys}
     if t.get("session") and t["status"] == "running":
         s = session_info(t["session"])

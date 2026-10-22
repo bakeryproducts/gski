@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -170,8 +171,31 @@ def create_session(title, agent, model, variant, rules, directory):
     return s, f"{fmt_model(ref)} ({src})"
 
 
-def send_prompt(sid, text):
-    return api("POST", f"/api/session/{sid}/prompt", {"text": text})
+def send_prompt(sid, text, delivery=None):
+    body = {"text": text, **({"delivery": delivery} if delivery else {})}
+    return api("POST", f"/api/session/{sid}/prompt", body)
+
+
+def _loc(directory):
+    return "location[directory]=" + urllib.parse.quote(str(directory))
+
+
+def shells(sid, directory):
+    # running background shell jobs owned by the session; None when the server can't tell
+    out = fetch(f"/api/shell?{_loc(directory)}")
+    if out is None:
+        return None
+    return [s for s in out if s.get("status") == "running" and (s.get("metadata") or {}).get("sessionID") == sid]
+
+
+def kill_shell(shell_id, directory):
+    api("DELETE", f"/api/shell/{shell_id}?{_loc(directory)}")
+
+
+def pending_input(msgs):
+    # user/synthetic input newer than the last assistant turn: the session will wake on it
+    last = next((m for m in msgs if m.get("type") in ("assistant", "user", "synthetic")), None)
+    return bool(last and last["type"] != "assistant")
 
 
 def messages(sid, limit=None, timeout=60):
