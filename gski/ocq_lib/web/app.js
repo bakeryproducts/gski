@@ -13,6 +13,7 @@ let st = {
   run: null,
   filter: "all",
   open: new Set(),
+  actOpen: new Set(),
   details: {},
   data: null,
   limit: LIMIT,
@@ -153,6 +154,7 @@ async function loadProjects() {
       st.path = el.dataset.path;
       st.run = null;
       st.open.clear();
+      st.actOpen.clear();
       st.filter = "all";
       st.data = null;
       writeHash();
@@ -170,6 +172,7 @@ function renderIfChanged() {
     st.data,
     st.details,
     [...st.open],
+    [...st.actOpen],
     st.filter,
     st.limit,
   ]);
@@ -216,19 +219,48 @@ async function loadDetail(id) {
   renderIfChanged();
 }
 
+function actBox(t) {
+  const raw = Array.isArray(t.activity)
+    ? t.activity
+    : t.activity
+    ? [{ text: t.activity, status: "running" }]
+    : [];
+  const items =
+    t.live === "idle"
+      ? [{ text: "finished, waiting for orchestrator", status: "completed" }, ...raw]
+      : raw;
+  if (!items.length) return "";
+  const open = st.actOpen.has(t.id);
+  const cnt = items.length > 1 ? `${items.length} ` : "";
+  if (!open) {
+    const one = items[0].text.replace(/\s+/g, " ");
+    return `<div class="act mono"><span class="act-one">▸ ${esc(
+      one
+    )}</span><span class="act-cnt">${cnt}▾</span></div>`;
+  }
+  const rows = items
+    .map((a, i) => {
+      const cls =
+        a.status === "error"
+          ? "err"
+          : a.status === "running"
+          ? "run"
+          : "done";
+      const ic = a.status === "error" ? "✗" : a.status === "running" ? "▸" : "✓";
+      return `<div class="act-row ${cls}"><span class="act-ic">${ic}</span><span class="act-txt">${esc(
+        a.text
+      )}</span>${i === 0 ? `<span class="act-cnt">${cnt}▴</span>` : ""}</div>`;
+    })
+    .join("");
+  return `<div class="act mono open">${rows}</div>`;
+}
+
 function taskLine(t) {
   if (t.status === "running") {
     const ping = t.ping
       ? `<div class="ping"><b>ping</b>${esc(t.ping)}</div>`
       : "";
-    const act = t.activity
-      ? `<div class="act mono">${
-          t.live === "idle"
-            ? "finished, waiting for orchestrator"
-            : "▸ " + esc(t.activity)
-        }</div>`
-      : "";
-    return `<div class="sum">${esc(t.task)}</div>${ping}${act}`;
+    return `<div class="sum">${esc(t.task)}</div>${ping}${actBox(t)}`;
   }
   const ws =
     t.status === "reported" && t.worker
@@ -525,10 +557,21 @@ function render() {
     el.onclick = () => {
       st.run = el.dataset.run;
       st.open.clear();
+      st.actOpen.clear();
       st.filter = "all";
       st.limit = LIMIT;
       writeHash();
       loadRun();
+    };
+  });
+  main.querySelectorAll(".act").forEach((el) => {
+    el.onclick = (e) => {
+      e.stopPropagation();
+      if (window.getSelection && String(window.getSelection())) return;
+      const id = el.closest(".task").dataset.id;
+      if (st.actOpen.has(id)) st.actOpen.delete(id);
+      else st.actOpen.add(id);
+      render();
     };
   });
   main.querySelectorAll(".chip[data-f]").forEach((el) => {

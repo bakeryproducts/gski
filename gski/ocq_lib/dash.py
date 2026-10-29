@@ -80,7 +80,7 @@ def live_info(sid, root):
     return {
         "cost": round(s.get("cost") or 0, 4),
         "tokens": s.get("tokens"),
-        "activity": activity(messages(sid, limit=4)),
+        "activity": activity(messages(sid, limit=15)),
         "todos": None,
     }
 
@@ -128,7 +128,10 @@ def run_detail(root, name):
                 bg = shells(t["session"], root) or []
                 if bg:
                     r["live"] = "waiting"
-                    r["activity"] = f"waiting on {len(bg)} background job(s): {bg[0]['command'][:160]}"
+                    r["activity"] = [
+                        {"text": f"bg shell: {b['command']}"[:2000], "status": "running"}
+                        for b in bg
+                    ] + (r.get("activity") or [])
         elif not r["tokens"] and t.get("session") and t["status"] != "pending" and live is not None:
             r["tokens"] = finished_tokens(t["session"], root)
         rows.append(r)
@@ -188,6 +191,8 @@ class Handler(BaseHTTPRequestHandler):
             return self.send(200, (WEB_DIR / "style.css").read_bytes(), "text/css; charset=utf-8")
         if u.path == "/app.js":
             return self.send(200, (WEB_DIR / "app.js").read_bytes(), "text/javascript; charset=utf-8")
+        if u.path in ("/favicon.svg", "/favicon.ico"):
+            return self.send(200, (WEB_DIR / "favicon.svg").read_bytes(), "image/svg+xml")
         if u.path == "/api/projects":
             return self.send(200, {"server": active() is not None, "projects": projects()})
 

@@ -492,14 +492,14 @@ details.brief .md {
   margin-top: 10px;
   padding: 8px 14px;
   border-radius: 8px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .task .ping {
   font-size: 1rem;
   background: color-mix(in srgb, var(--reported) 16%, transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .task .ping b {
@@ -514,6 +514,75 @@ details.brief .md {
   font-size: .95rem;
   color: var(--running);
   background: color-mix(in srgb, var(--running) 10%, transparent);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.task .act:hover {
+  background: color-mix(in srgb, var(--running) 15%, transparent);
+}
+
+.task .act-one {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task .act-cnt {
+  flex: none;
+  font-size: .82rem;
+  opacity: .75;
+}
+
+.task .act.open {
+  display: block;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.task .act-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 7px 0;
+}
+
+.task .act-row:first-child {
+  padding-top: 0;
+}
+
+.task .act-row:last-child {
+  padding-bottom: 0;
+}
+
+.task .act-row + .act-row {
+  border-top: 1px solid color-mix(in srgb, var(--running) 18%, transparent);
+}
+
+.task .act-row.done {
+  color: var(--fg);
+  opacity: .8;
+}
+
+.task .act-row.err {
+  color: var(--failed);
+}
+
+.task .act-ic {
+  flex: none;
+  width: 1ch;
+}
+
+.task .act-txt {
+  flex: 1;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
 }
 
 .detail {

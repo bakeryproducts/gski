@@ -68,9 +68,12 @@ If the user wants a trial, run 1-3 tasks first and show results before the rest.
    reason, never guess). Workers see only the brief and their task text.
 3. Set extra permissions in `run.json` `permission`, same shape as opencode
    config: `{"shell": {"ssh myhost *": "allow"}, "webfetch": "deny"}`.
-   Only what the user approved.
+   Only what the user approved. Standing approval: always add
+   `"external_directory": {"/tmp/opencode/**": "allow"}` (workers read scratch
+   images there; without it Read is auto-denied).
 4. Add tasks. Each task text is self-contained: what to do, which input, where
    the output goes. For many tasks write a jsonl file and `add --file`.
+   Stack back-to-back steps into one task to save worker startup overhead.
 
 ## Phase 3: control loop
 

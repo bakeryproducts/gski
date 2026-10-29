@@ -1,5 +1,7 @@
 import json
 import os
+import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -202,6 +204,23 @@ def cmd_spawn(args):
         print(f"{t['id']} running {s['id']} [{used}]")
 
 
+def fmt_dur(s):
+    h, rem = divmod(max(int(s), 0), 3600)
+    m, s = divmod(rem, 60)
+    return f"{h}h{m:02d}m" if h else f"{m}m{s:02d}s"
+
+
+def notify(text, color):
+    if not (shutil.which("hyprctl") and os.environ.get("HYPRLAND_INSTANCE_SIGNATURE")):
+        return
+    try:
+        subprocess.Popen(["hyprctl", "notify", "-1", "6000", color, f"fontsize:20 {text}"],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+    except OSError:
+        pass
+
+
 def cmd_wait(args):
     rd = run_dir(args.run)
     cfg = load_cfg(rd)
@@ -231,7 +250,14 @@ def cmd_wait(args):
                     lines.append(line)
         if lines:
             print("\n".join(lines))
-            print(summary(fold(rd)))
+            tasks = fold(rd)
+            print(summary(tasks))
+            if not any(t["status"] in ("pending", "running") for t in tasks.values()):
+                bad = any(t["status"] == "failed" or (t["status"] == "reported" and t.get("worker") != "done") for t in tasks.values())
+                starts = [t["started"] for t in tasks.values() if t.get("started")]
+                ends = [t["finished"] for t in tasks.values() if t.get("finished")]
+                took = f" | {fmt_dur(max(ends) - min(starts))}" if starts and ends else ""
+                notify(f"{args.run}: {summary(tasks).split(' | ')[0]}{took}", "rgb(fb4934)" if bad else "rgb(d79921)")
             return
         if time.time() >= deadline:
             print(f"timeout: {len(running)} running")

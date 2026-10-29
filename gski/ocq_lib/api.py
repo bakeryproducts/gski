@@ -242,13 +242,20 @@ def sweep(rd, cfg, by_session, append_fn):
             print(f"{tid} denied {what}")
 
 
-def activity(msgs):
+def activity(msgs, limit=10):
+    out = []
     for m in assistants(msgs):
         for c in reversed(m.get("content", [])):
             if c.get("type") == "tool":
-                inp = (c.get("state") or {}).get("input") or {}
-                what = inp.get("command") or inp.get("path") or inp.get("filePath") or inp.get("pattern") or ""
-                return f"{c.get('name')}: {what}"[:200]
-            if c.get("type") == "text" and c.get("text", "").strip():
-                return c["text"][:200]
-    return ""
+                st = c.get("state") or {}
+                inp = st.get("input") or {}
+                what = inp.get("command") or inp.get("path") or inp.get("filePath") or inp.get("pattern") or inp.get("url") or inp.get("query") or ""
+                out.append({
+                    "text": f"{c.get('name')}: {what}"[:2000],
+                    "status": st.get("status") or "completed",
+                })
+                if len(out) >= limit:
+                    return out
+            elif not out and c.get("type") == "text" and c.get("text", "").strip():
+                out.append({"text": c["text"].strip()[:2000], "status": "completed"})
+    return out
