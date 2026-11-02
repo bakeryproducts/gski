@@ -8,7 +8,7 @@ from pathlib import Path
 
 from .models import GEMINI_TEXT, GEMINI_TRANSCRIBE
 
-MODELS = {k: GEMINI_TEXT[k] for k in ("flash", "pro")}
+MODELS = GEMINI_TEXT
 
 DEFAULT_LIKE = (
     "bizarre expressive non-verbal vocalizations: guttural growls, throat rumbles, "
@@ -450,5 +450,5 @@ def register(subparsers):
     s.add_argument("--context", help="extra context for the model (who is speaking, what show)")
     s.add_argument("--extract", action="store_true", help="cut audio (and video, if any) samples with ffmpeg")
     s.add_argument("--pad", type=float, default=0.5, help="seconds of padding around each cut (default: 0.5)")
-    s.add_argument("--model", choices=list(MODELS), default="flash", help="detection model (default: flash)")
+    s.add_argument("--model", choices=list(MODELS), default="3-8", help="detection model (default: 3-8)")
     s.set_defaults(func=run_sounds)

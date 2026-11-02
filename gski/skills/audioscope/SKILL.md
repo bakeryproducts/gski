@@ -63,7 +63,7 @@ Shared:
 
 transcribe: `--lang BCP47` (default auto), `--no-diarize`, `--no-timestamps`, `--smart`, `--gap SECS` (1.2).
 
-sounds: `--like TEXT`, `--context TEXT`, `--extract`, `--pad SECS` (0.5), `--model flash|pro` (flash).
+sounds: `--like TEXT`, `--context TEXT`, `--extract`, `--pad SECS` (0.5), `--model 3-8|argon` (3-8).
 
 ## Requirements
 

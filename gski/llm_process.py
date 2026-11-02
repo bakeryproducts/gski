@@ -6,7 +6,7 @@ from pathlib import Path
 from .models import GEMINI_TEXT
 
 
-MODELS = {k: GEMINI_TEXT[k] for k in ("flash", "pro")}
+MODELS = GEMINI_TEXT
 
 genai = None
 types = None
@@ -104,8 +104,8 @@ def register(subparsers):
         "--model",
         "-m",
         choices=list(MODELS.keys()),
-        default="flash",
-        help="model to use (default: flash)",
+        default="3-8",
+        help="model to use (default: 3-8)",
     )
     p.add_argument(
         "--system",

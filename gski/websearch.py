@@ -5,7 +5,7 @@ import urllib.request
 from .models import GEMINI_TEXT
 
 
-MODEL = GEMINI_TEXT["flash"]
+MODEL = GEMINI_TEXT["3-8"]
 
 
 def resolve_vertex_url(vertex_uri):
