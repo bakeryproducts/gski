@@ -212,8 +212,9 @@ def _already_transcoded(path, height, fps, keep_audio):
 
 def find_cached_file(obj):
     from google import genai
+    from google.genai import types
 
-    client = genai.Client()
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1beta"))
     for f in client.files.list():
         if getattr(f, "display_name", None) == obj:
             while f.state and f.state.name == "PROCESSING":
@@ -230,8 +231,9 @@ def upload_to_files_api(local_path, obj, mime="video/mp4"):
     if cached:
         return cached
     from google import genai
+    from google.genai import types
 
-    client = genai.Client()
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1beta"))
     size_mb = Path(local_path).stat().st_size / (1024 * 1024)
     t0 = time.time()
     log(f"[files] uploading {size_mb:.1f}MB ({obj})...")

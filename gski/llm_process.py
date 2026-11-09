@@ -142,7 +142,7 @@ def run(args):
 
     contents = build_contents(args.prompt, args.files, stdin_data)
     config = build_config(args)
-    client = genai.Client()
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1beta"))
     model = MODELS[args.model]
 
     response = client.models.generate_content(

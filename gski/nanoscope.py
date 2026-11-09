@@ -127,6 +127,7 @@ def run(args):
         die("GEMINI_API_KEY env var required")
 
     from google import genai
+    from google.genai import types
 
     prompt = args.prompt
     if args.detect:
@@ -161,7 +162,7 @@ def run(args):
     if args.segment:
         kwargs["generation_config"] = {"thinking_level": "low"}
 
-    client = genai.Client()
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1beta"))
     interaction = run_interaction(client, kwargs, is_video=bool(videos))
     text = extract_text(interaction)
 

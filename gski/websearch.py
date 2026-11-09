@@ -86,8 +86,9 @@ def run(args):
         sys.exit(1)
 
     from google import genai
+    from google.genai import types
 
-    client = genai.Client()
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1beta"))
 
     interaction = client.interactions.create(
         model=MODEL,

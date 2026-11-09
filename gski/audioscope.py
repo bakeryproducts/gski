@@ -248,7 +248,7 @@ def run_transcribe(args):
         args.diarize = args.timestamps = False
     src, out = _resolve_input(args)
     _init_deps()
-    client = genai.Client()
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1beta"))
     config = _transcription_config(args)
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -359,7 +359,7 @@ def _cut(src, dest_dir, items, total, pad, with_video):
 def run_sounds(args):
     src, out = _resolve_input(args)
     _init_deps()
-    client = genai.Client()
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1beta"))
     model = MODELS[args.model]
     context = f"Context: {args.context}\n" if args.context else ""
     prompt = PROMPT_SOUNDS.format(like=args.like, context=context)
