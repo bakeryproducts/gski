@@ -89,15 +89,15 @@ gski omni extend <job-id> ["prompt"] [--image FILE]... [--video FILE]... [--outp
 gski omni list|status|wait|show|rm ...
 gski ocm start NAME "task" [--dir DIR] [--model provider/model] [--variant V] [--allow 'action:pattern']...
 gski ocm ls [--status S...] | show NAME [--chars N] | wait [--timeout S]
-gski ocm send NAME "text" [--queue] [--allow 'action:pattern']... | done|fail NAME [--note] | abort [NAME]
+gski ocm send NAME "text" [--queue] [--allow 'action:pattern']... | send .. "text" | done|fail NAME [--note] | abort [NAME]
 gski ocq serve [--port 4096]   # optional; default is the opencode v2 background service
 gski ocq init RUN [--agent A] [--model provider/model] [--variant V] [--concurrency N]
 gski ocq add RUN ["task"]... [--file F|-] [--deps IDS]
 gski ocq ls | ledger RUN [--status S...] [--all]
 gski ocq spawn RUN [ID...] [--allow 'action:pattern']... [--agent A] [--model M] [--variant V]
-gski ocq wait-any RUN [--timeout S] | result RUN ID
+gski ocq wait RUN [--timeout S] | result RUN ID
 gski ocq done|fail RUN ID... [--note] | retry RUN ID... [--feedback] | abort RUN [ID...]
-gski ocq send RUN ID "text" [--queue]   # message a running/reported worker; reported -> running
+gski ocq send RUN ID "text" [--queue] | send .. "text"   # message worker or parent orchestrator
 gski ocq dash [--port 4097]   # read-only web dashboard; projects registry in ~/.local/state/ocq/projects
 gski solver triz [--list params|principles | -i ID -w ID | -r] | scamper [-n N] | lateral [-n N] | hats [-s SEQ | -r] | morph AXES... [-n N]
 gski tgscope info|search|show <export-dir-or-result.json> ...
