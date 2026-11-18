@@ -369,8 +369,8 @@ def cmd_send(args):
     cfg = load_cfg(rd)
     tasks = fold(rd)
     t = tasks[resolve(tasks, [tid_arg])[0]]
-    if t["status"] not in ("running", "reported") or not t.get("session"):
-        die(f"{t['id']} is {t['status']}: send works on running or reported tasks (use retry --feedback)")
+    if t["status"] not in ("running", "reported", "done") or not t.get("session"):
+        die(f"{t['id']} is {t['status']}: send works on running, reported, or done tasks (use retry --feedback)")
     rules = BASE_RULES + rules_from(cfg.get("permission")) + [parse_allow(a) for a in t.get("allow") or []]
     api("PATCH", f"/api/session/{t['session']}", {"permissions": rules})
     rel = f".ocq/runs/{run_name}/results/{t['id']}.json"
@@ -381,12 +381,13 @@ def cmd_send(args):
     delivery = "queue" if args.queue else "steer"
     send_prompt(t["session"], prompt, delivery)
     ev = {"id": t["id"], "sent": time.time(), "message": cut(text, 300)}
-    if t["status"] == "reported":
+    reopen = t["status"] in ("reported", "done")
+    if reopen:
         b = t.get("billed") or {}
         neg = {k: -v for k, v in (b.get("tokens") or {}).items()}
         ev.update(status="running", cost=-(b.get("cost") or 0), tokens=neg or None, billed=None)
     append(rd, **ev)
-    print(f"{t['id']} sent ({delivery}){' -> running' if t['status'] == 'reported' else ''}")
+    print(f"{t['id']} sent ({delivery}){' -> running' if reopen else ''}")
 
 
 def cmd_abort(args):

@@ -49,13 +49,13 @@ gski ocq done RUN ID... [--note]
 gski ocq retry RUN ID... [--feedback "what to fix"]
 gski ocq fail RUN ID... [--note]
 gski ocq abort RUN [ID...]                 # running -> pending, kills its background jobs
-gski ocq send RUN ID "text" [--queue]      # message a running/reported worker; reported -> running
+gski ocq send RUN ID "text" [--queue]      # message a running/reported/done worker; reported/done -> running
 gski ocq send .. "text"                    # from W: message orchestrator while keeping bg jobs running
 ```
 
 Task ids are zero-padded (`0001`); `1` also works.
 Statuses: `pending` -> `running` -> `reported` -> `done` | `failed`, or back to
-`pending` by `retry`/`abort`, or `reported` -> `running` by `send`.
+`pending` by `retry`/`abort`, or `reported`/`done` -> `running` by `send`.
 `init --agent` sets the run default; `spawn --agent` overrides that dispatch only.
 Repeat the override on retries. ocq sessions cannot delegate to subagents.
 
@@ -135,9 +135,9 @@ Deciding:
   and the worker's last turn is done.
 - Question or correction that needs the worker's context: `send RUN ID "..."`.
   It steers or asks a running worker (`--queue`: after its current turn) or
-  resumes a `reported` one in the same session. Use `retry --feedback` for a
-  fresh attempt. If background `wait` is already running, do not start a second
-  `wait` after `send`.
+  resumes a `reported`/`done` one in the same session (`-> running`). Use
+  `retry --feedback` for a fresh attempt/session. If background `wait` is
+  already running, do not start a second `wait` after `send`.
 - A running worker messages back via `gski ocq send .. "..."`, delivered to your
   session as `[ocq/<run>/<id>] ...` without stopping `wait`.
 
