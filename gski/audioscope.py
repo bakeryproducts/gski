@@ -450,5 +450,5 @@ def register(subparsers):
     s.add_argument("--context", help="extra context for the model (who is speaking, what show)")
     s.add_argument("--extract", action="store_true", help="cut audio (and video, if any) samples with ffmpeg")
     s.add_argument("--pad", type=float, default=0.5, help="seconds of padding around each cut (default: 0.5)")
-    s.add_argument("--model", choices=list(MODELS), default="3-8", help="detection model (default: 3-8)")
+    s.add_argument("--model", choices=list(MODELS), default="hydrogen", help="detection model (default: hydrogen)")
     s.set_defaults(func=run_sounds)

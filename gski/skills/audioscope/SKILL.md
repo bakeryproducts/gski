@@ -28,7 +28,7 @@ Notes:
 
 ### sounds
 
-Finds non-verbal sounds (growls, gasps, grunts, sighs, whatever you describe) in an audio or video file. Gemini (default `gemini-3.8-flash`) listens to the audio and returns the time range of each matching sound. The result is printed and saved; with `--extract` each sound is also cut out with ffmpeg (mp3, plus mp4 if the input has video), padded by `--pad` seconds.
+Finds non-verbal sounds (growls, gasps, grunts, sighs, whatever you describe) in an audio or video file. Gemini (default `gemini-4-hydrogen`) listens to the audio and returns the time range of each matching sound. The result is printed and saved; with `--extract` each sound is also cut out with ffmpeg (mp3, plus mp4 if the input has video), padded by `--pad` seconds.
 
 What counts as a match is up to you: describe it with `--like`, add background with `--context`. To limit how many come back, say so in `--like` (e.g. "the 3 most extreme groans").
 
@@ -63,7 +63,7 @@ Shared:
 
 transcribe: `--lang BCP47` (default auto), `--no-diarize`, `--no-timestamps`, `--smart`, `--gap SECS` (1.2).
 
-sounds: `--like TEXT`, `--context TEXT`, `--extract`, `--pad SECS` (0.5), `--model 3-8|carbon` (3-8).
+sounds: `--like TEXT`, `--context TEXT`, `--extract`, `--pad SECS` (0.5), `--model hydrogen|carbon` (hydrogen).
 
 ## Requirements
 

@@ -1,5 +1,5 @@
 GEMINI_TEXT = {
-    "3-8": "gemini-3.8-flash",
+    "hydrogen": "gemini-4-hydrogen",
     "carbon": "gemini-4-carbon",
 }
 
