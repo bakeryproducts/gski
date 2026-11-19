@@ -3,31 +3,16 @@ import itertools
 import json
 import os
 import subprocess
-import sys
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
+from gski.oc_lib.common import die
+
 DEFAULT_PORT = 4096
 DEFAULT_VARIANT = "high"
-
-BASE_RULES = [
-    {"action": "subagent", "resource": "*", "effect": "deny"},
-    {"action": "question", "resource": "*", "effect": "deny"},
-    {"action": "shell", "resource": "gski ocq*", "effect": "deny"},
-    {"action": "shell", "resource": "gski ocq send *", "effect": "allow"},
-    {"action": "external_directory", "resource": "/tmp/opencode/**", "effect": "allow"},
-]
-
-DEFAULT_CFG = {
-    "agent": "worker",
-    "model": None,
-    "allow": [],
-    "permission": {},
-    "orchestrator": None,
-}
 
 EVENT_TYPES = (
     "session.execution.succeeded",
@@ -37,14 +22,19 @@ EVENT_TYPES = (
     "shell.exited",
 )
 
-DENY_MSG = "ocq: this specific call is not permitted. Do not retry it; continue without it or write status failed."
+DENY_MSG = "This specific call is not permitted in this session. Do not retry it; continue without it or stop and report the missing permission."
 
 _conn = {}
+_daemon = False
 
 
-def die(msg, code=1):
-    print(f"error: {msg}", file=sys.stderr)
-    sys.exit(code)
+def set_daemon():
+    global _daemon
+    _daemon = True
+
+
+def reset_conn():
+    _conn.clear()
 
 
 def _service_file():
@@ -77,17 +67,20 @@ def _alive(url, password):
 
 
 def connect():
-    # OCQ_URL (+ OCQ_PASSWORD) targets an explicit server; default is the shared background service
     if _conn:
         return _conn["url"], _conn["password"]
     env = os.environ.get("OCQ_URL")
     if env:
         url, pw = env.rstrip("/"), os.environ.get("OCQ_PASSWORD")
         if not _alive(url, pw):
+            if _daemon:
+                raise OSError(f"server not reachable at {url}")
             die(f"server not reachable at {url}")
     else:
         found = _read_service()
         if not found or not _alive(*found):
+            if _daemon:
+                raise OSError("opencode background service not reachable")
             subprocess.run(["opencode", "service", "start"], capture_output=True)
             for _ in range(20):
                 found = _read_service()
@@ -136,7 +129,6 @@ def fetch(path, timeout=5):
 
 
 def parse_model(model):
-    # "provider/model#variant" -> (provider, model, variant)
     if not model:
         return None, None, None
     model, _, variant = model.partition("#")
@@ -145,7 +137,6 @@ def parse_model(model):
 
 
 def _retry(fn, tries=20):
-    # the service may still be loading providers right after a restart
     for _ in range(tries):
         out = fn()
         if out:
@@ -155,7 +146,6 @@ def _retry(fn, tries=20):
 
 
 def resolve_model(agent, model):
-    # precedence: explicit model > agent's own model > server default; variant defaults to high
     prov, mid, var = parse_model(model)
     src = "run"
     if not mid:
@@ -209,12 +199,35 @@ def send_synthetic(sid, text, description=None, delivery="queue"):
     return api("POST", f"/api/session/{sid}/synthetic", body)
 
 
+def try_send_synthetic(sid, text, description=None, delivery="queue"):
+    if not sid:
+        return False
+    body = {
+        "text": text,
+        **({"description": description} if description else {}),
+        **({"delivery": delivery} if delivery else {}),
+    }
+    for i in range(3):
+        try:
+            _call("POST", f"/api/session/{sid}/synthetic", body, timeout=15)
+            return True
+        except urllib.error.HTTPError as e:
+            if e.code == 404:
+                return False
+            if e.code == 401:
+                reset_conn()
+        except (urllib.error.URLError, OSError, ValueError):
+            reset_conn()
+        if i < 2:
+            time.sleep(1)
+    return False
+
+
 def _loc(directory):
     return "location[directory]=" + urllib.parse.quote(str(directory))
 
 
 def shells(sid, directory):
-    # running background shell jobs owned by the session; None when the server can't tell
     out = fetch(f"/api/shell?{_loc(directory)}")
     if out is None:
         return None
@@ -226,7 +239,6 @@ def kill_shell(shell_id, directory):
 
 
 def pending_input(msgs):
-    # user/synthetic input newer than the last assistant turn: the session will wake on it
     last = next((m for m in msgs if m.get("type") in ("assistant", "user", "synthetic")), None)
     return bool(last and last["type"] != "assistant")
 
@@ -277,10 +289,12 @@ def err_text(err):
     return f"{err.get('type') or err.get('name') or 'error'}: {err.get('message', '')}".strip(": ")
 
 
-def sweep(rd, cfg, by_session, append_fn):
+def sweep(target_dir, by_session, append_fn):
     for sid, tid in by_session.items():
         for p in fetch(f"/api/session/{sid}/permission") or []:
-            api("POST", f"/api/session/{sid}/permission/{p['id']}/reply", {"decision": "reject", "message": DENY_MSG})
+            try:
+                _call("POST", f"/api/session/{sid}/permission/{p['id']}/reply", {"decision": "reject", "message": DENY_MSG}, timeout=15)
+            except (urllib.error.URLError, OSError, ValueError):
+                continue
             what = f"{p.get('action')}: {' '.join(p.get('resources') or [])}"[:120]
-            append_fn(rd, id=tid, denied=what)
-            print(f"{tid} denied {what}")
+            append_fn(target_dir, id=tid, denied=what)

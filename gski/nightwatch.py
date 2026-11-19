@@ -9,16 +9,18 @@ import urllib.parse
 import urllib.request
 from uuid import uuid4
 
-from gski.ocm import base_dir, read_manager
-from gski.ocq_lib.api import _headers, _read_service, die
+from gski.oc_lib.api import _headers, _read_service
+from gski.oc_lib.common import die
+from gski.ocm.settle import manager_waiting
+from gski.ocm.state import base_dir, read_manager
 
 CHECK = 60
 PROBE = (
     "[Night Watchman — automatic failsafe, NOT a new user request or a nudge to do more work.]\n"
     "Is the user's original assignment already over? If yes, just confirm and stop. "
     "Do not invent follow-ups, rerun checks or extend a finished experiment. "
-    "If you were intentionally stopped, stay stopped. If a job is still running, restore "
-    "the usual wait if missing; do not relaunch the job. Only if an accidental stop left agreed work unfinished, "
+    "If you were intentionally stopped, stay stopped. If a job is still running, run "
+    "`gski ocm ls` to ensure its watcher is active; do not relaunch the job. Only if an accidental stop left agreed work unfinished, "
     "resume that work within the original scope and permissions. If blocked, state why and stop."
 )
 DENIED = "Night mode: no new permission was granted. Do not retry or bypass this restriction. Use an authorized alternative or report the blocker."
@@ -82,10 +84,7 @@ def observe(sid, path):
         return "detached", None
     if clear_requests(path) or sid in request("GET", "/api/session/active"):
         return "busy", None
-    query = urllib.parse.urlencode({"location[directory]": info["location"]["directory"]})
-    jobs = request("GET", "/api/shell?" + query)
-    if any(j["status"] == "running" and (j.get("metadata") or {}).get("sessionID") == sid
-           and re.search(r"\bgski\s+ocm\s+wait\b", j["command"]) for j in jobs):
+    if manager_waiting(sid, (info.get("location") or {}).get("directory")):
         return "waiting", None
     inbox = request("GET", path + "/inbox")
     if inbox:

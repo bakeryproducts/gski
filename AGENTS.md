@@ -21,9 +21,11 @@ gski/
     ├── nanobanana.py       # gski nanobanana — Gemini image gen/edit
     ├── nanoscope.py        # gski nanoscope — Gemini image & video understanding
     ├── nanoscope_lib/      # nanoscope video transcode, GCS upload, interactions API
-    ├── ocm.py              # gski ocm — manage opencode orchestrator sessions (ledger in .ocm/)
-    ├── ocq.py              # gski ocq — orchestrate opencode worker sessions (ledger in .ocq/)
-    ├── ocq_lib/            # ocq API, ledger & OpenCode TUI plugin (ocq_lib/tui)
+    ├── nightwatch.py       # gski nightwatch — failsafe watcher for manager sessions
+    ├── oc_lib/             # shared OpenCode HTTP/SSE client, flock watcher, JSONL/rule utils
+    ├── ocm/                # gski ocm — manage opencode orchestrator streams (ledger in .ocm/)
+    ├── ocq/                # gski ocq — orchestrate opencode worker sessions (ledger in .ocq/)
+    ├── ocq_tui/            # OpenCode TUI plugin (/ocq)
     ├── omni.py             # gski omni — Gemini Omni Flash video gen/edit (stateful jobs)
     ├── omni_lib/           # omni job state, interactions/video plumbing
     ├── solver.py           # gski solver — creative problem-solving (TRIZ, SCAMPER, lateral, hats, morph)
@@ -88,10 +90,9 @@ gski omni edit <job-id> "prompt" [--image FILE]... [--video FILE]... [--aspect-r
 gski omni extend <job-id> ["prompt"] [--image FILE]... [--video FILE]... [--output FILE] [--async]
 gski omni list|status|wait|show|rm ...
 gski ocm start NAME "task" [--dir DIR] [--model provider/model] [--allow 'action:pattern']...
-gski ocm ls [--status S...] | show NAME [--chars N] | wait [--timeout S]
+gski ocm ls [--status S...] | show NAME [--chars N]
 gski ocm send NAME "text" [--queue] [--allow 'action:pattern']... | send .. "text" | done|fail NAME [--note] | abort [NAME]
 gski ocq spawn RUN "task"... [--file F|-] [--agent worker|builder] [--model M] [--allow 'action:pattern']...
-gski ocq wait RUN [--any] [--timeout S]
 gski ocq ls [RUN] [--status S...] | show RUN ID [--chars N]
 gski ocq send RUN ID "text" [--queue] [--allow 'action:pattern']... | send .. "text"
 gski ocq abort RUN [ID...]
