@@ -655,6 +655,16 @@ export default Plugin.define({
       return ""
     }
 
+    function shortTier(t: any) {
+      const m = String(t.model || "")
+        .split("/")
+        .pop()!
+        .split("#")[0]
+        .replace("gemini-4-", "")
+      const a = t.agent && t.agent !== "worker" ? t.agent : ""
+      return [a, m].filter(Boolean).join("/")
+    }
+
     function TaskRow(props: { t: any; sel: boolean }) {
       const t = () => props.t
       const dot = () => {
@@ -664,6 +674,7 @@ export default Plugin.define({
       }
       const meta = () =>
         [
+          shortTier(t()),
           t().attempts > 1 ? `a${t().attempts}` : "",
           t().denied?.length ? `denied ${t().denied.length}` : "",
           t().cost ? money(t().cost) : "",
@@ -712,8 +723,9 @@ export default Plugin.define({
         const x = t()
         const reply = x.session ? replies()[x.session] : undefined
         return [
-          ["Report", x.worker ? `${x.worker}: ${x.note || ""}` : x.note],
+          ["Report", x.status === "reported" && x.worker ? `${x.worker}: ${x.note || ""}` : x.note],
           ["Artifact", x.artifact],
+          ["Model", [x.agent, x.model].filter(Boolean).join(" · ")],
           ["Message", x.msg],
           [
             "Activity",
@@ -980,15 +992,16 @@ export default Plugin.define({
                     <span style={{ fg: base(), attributes: TextAttributes.BOLD }}>{run().name}</span>
                     <span style={{ fg: muted() }}>
                       {run().cfg.agent ? "  " + run().cfg.agent : ""}
-                      {run().cfg.model ? " · " + run().cfg.model : ""} · concurrency {run().cfg.concurrency ?? 1}
+                      {run().cfg.model ? " · " + run().cfg.model : ""}
+                      {run().cfg.concurrency ? ` · concurrency ${run().cfg.concurrency}` : ""}
                     </span>
                   </text>
                   <text wrapMode="none" truncate height={1} flexShrink={0}>
                     {stat(`${c().done || 0}/${run().total}`, "done")}
                     {stat(c().running || 0, "running", c().running ? statusColor("running") : undefined)}
-                    {stat(c().reported || 0, "review", c().reported ? statusColor("reported") : undefined)}
+                    {c().reported ? stat(c().reported, "review", statusColor("reported")) : null}
                     {stat(c().failed || 0, "failed", c().failed ? statusColor("failed") : undefined)}
-                    {stat(c().pending || 0, "pending")}
+                    {c().pending ? stat(c().pending, "pending") : null}
                     {stat(money(cost()), "")}
                     {stat(kn(tk().input + tk().cache_read), "in")}
                     {stat(kn(tk().output + tk().reasoning), "out")}
