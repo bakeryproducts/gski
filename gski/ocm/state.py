@@ -145,10 +145,10 @@ def build_prompt(name, text):
     return (
         f"ocm stream: {name}\n"
         "Upstream is a Manager session. Execution is pre-approved within the goal, constraints, and permissions below: "
-        "plan and run Round 1 directly without pausing for routine plan approval, then stop and report concrete results "
+        "plan and run Round 1 directly, then report concrete results "
         "(stop early only on a genuine scope contradiction or missing permission).\n"
-        "The question tool is disabled; upstream receives your report automatically when you stop with no background shells or running ocq tasks, "
-        'or mid-run via: gski ocm send .. "..."\n\n'
+        "The question tool is disabled; upstream receives your final report automatically when all work finishes, "
+        'or mid-run messages via: gski ocm send .. "..."\n\n'
         f"Task:\n{text}"
     )
 

@@ -156,11 +156,7 @@ def cmd_send(args):
     api("PATCH", f"/api/session/{s['session']}", {"permissions": rules_for(allow)})
     was = s["status"]
     delivery = "queue" if args.queue else "steer"
-    head = (
-        '[ocm manager — handle what can be done now, reply mid-run via `gski ocm send .. "..."`, then end your turn while workers/jobs run]'
-        if was == "running"
-        else "[ocm manager]"
-    )
+    head = '[ocm manager — mid-run reply via `gski ocm send .. "..."`]' if was == "running" else "[ocm manager]"
     now = time.time()
     send_prompt(s["session"], f"{head}\n{args.text}", delivery)
     append(

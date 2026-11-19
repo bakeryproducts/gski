@@ -93,7 +93,7 @@ def preview_tasks(tasks, settled):
     return out
 
 
-def emit_wave(rd, cfg, settled, final_tasks):
+def emit_settled(rd, cfg, settled, final_tasks):
     settled_ids = {ev["id"] for ev in settled}
     wave = [
         final_tasks[tid]
@@ -101,12 +101,15 @@ def emit_wave(rd, cfg, settled, final_tasks):
         if tid in settled_ids or (t["status"] in ("done", "failed") and t.get("notified") is False)
     ]
     orch_sid = cfg.get("orchestrator")
+    still_running = [tid for tid, t in final_tasks.items() if t["status"] == "running"]
     if wave and orch_sid:
         lines = [f"[ocq/{rd.name}]"]
         for t in wave:
             lines.append(row(t))
             for d in t.get("denied") or []:
                 lines.append(f"  denied: {d}")
+        if still_running:
+            lines.append(f"still running: {', '.join(still_running)}")
         lines.append(summary(final_tasks))
         try_send_synthetic(orch_sid, "\n".join(lines), f"ocq/{rd.name}")
     for ev in settled:
@@ -114,7 +117,7 @@ def emit_wave(rd, cfg, settled, final_tasks):
     for t in wave:
         if t["id"] not in settled_ids:
             append(rd, id=t["id"], notified=True)
-    if wave:
+    if wave and not still_running:
         in_ocm = bool(orch_sid and str(session_info(orch_sid).get("title") or "").startswith("ocm/"))
         if not in_ocm:
             bad = any(t["status"] == "failed" for t in final_tasks.values())
@@ -130,7 +133,7 @@ def step_run(rd):
     running = {t["session"]: t for t in tasks.values() if t["status"] == "running" and t.get("session")}
     if not running:
         if any(t["status"] in ("done", "failed") and t.get("notified") is False for t in tasks.values()):
-            emit_wave(rd, cfg, [], tasks)
+            emit_settled(rd, cfg, [], tasks)
         return "empty"
     sweep(rd, {sid: t["id"] for sid, t in running.items()}, append)
     live = active()
@@ -165,12 +168,8 @@ def step_run(rd):
     if not settled:
         return "wait"
     final_tasks = preview_tasks(fold(rd), settled)
-    if any(t["status"] == "running" for t in final_tasks.values()):
-        for ev in settled:
-            append(rd, **ev, notified=False)
-        return "wait"
-    emit_wave(rd, load_cfg(rd), settled, final_tasks)
-    return "empty"
+    emit_settled(rd, load_cfg(rd), settled, final_tasks)
+    return "wait" if any(t["status"] == "running" for t in final_tasks.values()) else "empty"
 
 
 def needs_watch(rd):

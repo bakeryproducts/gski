@@ -164,7 +164,7 @@ def cmd_send(args):
     api("PATCH", f"/api/session/{t['session']}", {"permissions": rules})
     rel = f".ocq/runs/{run_name}/results/{t['id']}.json"
     prompt = (
-        f'[ocq orchestrator — reply mid-run via `gski ocq send .. "..."` while keeping work/bg jobs running; '
+        f'[ocq orchestrator — mid-run reply via `gski ocq send .. "..."`; '
         f'when finished, write {rel}: {{"status": "done" | "failed", "artifact": "<path or short value>", "note": "<one line>"}}]\n{text}'
     )
     delivery = "queue" if args.queue else "steer"
