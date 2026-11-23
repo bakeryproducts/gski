@@ -9,7 +9,7 @@ import traceback
 import urllib.error
 from pathlib import Path
 
-from gski.oc_lib.api import EVENT_TYPES, open_events, reset_conn, set_daemon
+from gski.oc_lib.api import EVENT_TYPES, open_events, reset_conn, session_info, set_daemon
 
 
 def fmt_dur(s):
@@ -118,8 +118,13 @@ def run_watcher(lock_dir, has_running, running_sids, on_perm, step):
                             if step() == "empty" and release_or_recheck():
                                 return
                             continue
-                        if etype == "permission.asked" and sid in by_sid:
-                            on_perm(sid, by_sid[sid])
+                        if etype == "permission.asked":
+                            if sid in by_sid:
+                                on_perm(sid, by_sid[sid])
+                            elif sid:
+                                parent = session_info(sid).get("parentID")
+                                if parent in by_sid:
+                                    on_perm(sid, by_sid[parent])
                         elif etype == "shell.exited" or (sid in by_sid and etype in EVENT_TYPES):
                             last_check = time.time()
                             if step() == "empty" and release_or_recheck():

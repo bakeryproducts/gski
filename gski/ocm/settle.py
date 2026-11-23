@@ -4,6 +4,7 @@ from pathlib import Path
 from gski.oc_lib.api import (
     active,
     assistants,
+    denied_calls,
     err_text,
     messages,
     pending_input,
@@ -15,14 +16,20 @@ from gski.oc_lib.api import (
 )
 from gski.oc_lib.common import cut, known_projects, sum_tokens
 from gski.oc_lib.watch import notify, run_watcher, spawn_watcher
-from gski.ocm.state import append, fold, ocq_runs, read_manager, summary
+from gski.ocm.state import append, fold, ocq_run_dirs, ocq_runs, read_manager, stream_dur, summary
+from gski.ocq.settle import ensure_watch as ensure_ocq_watch, needs_watch as ocq_needs_watch
 
 
 def has_child_work(s, live):
     sid, d = s["session"], s["dir"]
     if shells(sid, d) != []:
         return True
-    if any(nrun > 0 for _, _, _, nrun in ocq_runs(s)):
+    ocq_busy = False
+    for rd in ocq_run_dirs(s):
+        if ocq_needs_watch(rd):
+            ensure_ocq_watch(rd)
+            ocq_busy = True
+    if ocq_busy:
         return True
     if any(aid != sid and session_info(aid).get("parentID") == sid for aid in (live or {})):
         return True
@@ -31,7 +38,7 @@ def has_child_work(s, live):
 
 def settle_event(s, live):
     sid = s["session"]
-    msgs = messages(sid, limit=20)
+    msgs = messages(sid, limit=50)
     asst = assistants(msgs)
     last = asst[0] if asst else None
     sent = s.get("sent") or s.get("started") or 0
@@ -68,14 +75,12 @@ def settle_event(s, live):
         "tokens": tokens,
         "finished": int(time.time()),
     }
-    return ev, full_reply
+    return ev, full_reply, denied_calls(msgs, sent)
 
 
 def format_report(s, full_reply, runs, streams):
     tag = "error" if s.get("error") else "reported"
-    w_cost = sum(r[2] for r in runs)
-    ocq_part = f" (+ ${w_cost:.2f} ocq)" if w_cost else ""
-    head = [f"[ocm/{s['id']} {tag} | cost ${s.get('cost', 0):.2f}{ocq_part}]"]
+    head = [f"[ocm/{s['id']} {tag} | {stream_dur(s)}]"]
     for d in s.get("denied") or []:
         head.append(f"denied: {d}")
     for rname, rsum, _, _ in runs:
@@ -110,7 +115,12 @@ def step_ocm(base):
         res = settle_event(s, live)
         if not res:
             continue
-        ev, full_reply = res
+        ev, full_reply, new_denied = res
+        seen = set(s.get("denied") or [])
+        for d in new_denied:
+            if d not in seen:
+                append(base, id=s["id"], denied=d)
+                seen.add(d)
         preview = {k: dict(v) for k, v in fold(base).items()}
         preview[s["id"]].update(ev)
         runs = ocq_runs(s)
@@ -152,6 +162,8 @@ def manager_waiting(sid, directory=None):
         for s in fold(base).values():
             if s.get("status") == "running" and read_manager(base, s) == sid:
                 ensure_watch(base)
+                for rd in ocq_run_dirs(s):
+                    ensure_ocq_watch(rd)
                 return True
     return False
 

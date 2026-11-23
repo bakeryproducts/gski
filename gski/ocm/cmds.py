@@ -4,23 +4,23 @@ from pathlib import Path
 
 from gski.oc_lib.api import (
     active,
-    api,
     create_session,
     interrupt,
     kill_shell,
     messages,
     send_prompt,
     send_synthetic,
-    session_info,
+    set_permissions,
     shells,
     try_send_synthetic,
     turn_text,
 )
 from gski.oc_lib.common import NAME_RE, cut, die, remember
-from gski.oc_lib.watch import spawn_watcher
+from gski.oc_lib.watch import fmt_dur, spawn_watcher
 from gski.ocm.settle import ensure_watch
 from gski.ocm.state import (
     PARENT_TARGETS,
+    ago,
     append,
     base_dir,
     build_prompt,
@@ -32,8 +32,11 @@ from gski.ocm.state import (
     ocq_runs,
     read_manager,
     rules_for,
+    stream_dur,
     summary,
+    task_dur,
     touch_manager,
+    worker_row,
 )
 
 
@@ -71,6 +74,52 @@ def cmd_start(args):
     print(f"{args.name} running {s['id']} [{used}] ({d})")
 
 
+def _worker_tag(t):
+    a = t.get("agent") or "worker"
+    m = (t.get("model") or "hydrogen").split("/")[-1].split("#")[0].replace("gemini-4-", "")
+    return f"[{a}/{m}]"
+
+
+def _live_session(sid, directory, live, now, limit=15):
+    is_active = bool(live and sid in live)
+    bg = [] if is_active else (shells(sid, directory) or [] if directory else [])
+    msgs = messages(sid, limit=limit) if sid else []
+    last_ts = None
+    for m in msgs:
+        if m.get("type") == "assistant":
+            tm = m.get("time") or {}
+            ms = tm.get("completed") or tm.get("streamed") or tm.get("created")
+            if ms:
+                last_ts = ms / 1000
+                break
+    tool_str = None
+    tool_running = False
+    for m in msgs:
+        for c in reversed(m.get("content") or []):
+            if c.get("type") != "tool":
+                continue
+            tname = c.get("name") or "tool"
+            st = c.get("state") or {}
+            tstat = st.get("status") or ""
+            inp = st.get("input") or {}
+            detail = inp.get("command") or inp.get("path") or inp.get("pattern") or inp.get("url") or inp.get("description") or ""
+            ctm = c.get("time") or {}
+            if tstat == "running" and is_active:
+                tool_running = True
+                ms = ctm.get("ran") or ctm.get("created")
+                tdur = f" ({fmt_dur(now - ms / 1000)})" if ms else ""
+                tool_str = f"running {tname}{tdur}: `{cut(detail, 70)}`" if detail else f"running {tname}{tdur}"
+            else:
+                ms = ctm.get("completed") or ctm.get("ran") or ctm.get("created")
+                when = f" {ago(ms / 1000, now)}" if ms else ""
+                err = " [error]" if tstat == "error" else ""
+                tool_str = f"last tool{when}: {tname}{err} `{cut(detail, 70)}`" if detail else f"last tool{when}: {tname}{err}"
+            break
+        if tool_str:
+            break
+    return is_active, bg, last_ts, tool_running, tool_str, turn_text(msgs)
+
+
 def cmd_ls(args):
     base = ocm_root() / ".ocm"
     streams = fold(base) if (base / "ledger.jsonl").exists() else {}
@@ -80,23 +129,27 @@ def cmd_ls(args):
     if not streams:
         print("no streams")
         return
+    now = time.time()
     print(summary(streams))
-    for s in streams.values():
-        if args.status and s["status"] not in args.status:
-            continue
-        cost = s.get("cost") or 0
-        if s["status"] == "running" and s.get("session"):
-            cost = max(cost, session_info(s["session"]).get("cost") or 0)
+    visible = [s for s in streams.values() if not args.status or s["status"] in args.status]
+    if visible:
+        print()
+    w = max((len(s["id"]) for s in visible), default=0)
+    for s in visible:
         denied = f" [denied {len(s['denied'])}]" if s.get("denied") else ""
         if s["status"] in ("reported", "done", "failed") and s.get("note"):
             info = s["note"]
         elif s["status"] == "running" and s.get("msg"):
-            info = f"msg: {s['msg']}"
+            when = f" {ago(s['msg_at'], now)}" if s.get("msg_at") else ""
+            info = f"msg{when}: {s['msg']}"
         else:
             info = s.get("task", "")
-        print(cut(f"{s['id']} {s['status']} ${cost:.2f}{denied} | {info}"))
-        for rname, rsum, _, _ in ocq_runs(s):
-            print(cut(f"  ocq/{rname}: {rsum}"))
+        print(f"{s['id']:<{w}}  {s['status']:<8}  {stream_dur(s, now):<6}{denied} | {cut(info, 110)}")
+        if s["status"] in ("running", "reported") or args.all:
+            for rname, rsum, tasks, _ in ocq_runs(s, now):
+                print("  " + cut(f"ocq/{rname}: {rsum}", 140))
+                for t in tasks.values():
+                    print("    " + worker_row(t, now))
 
 
 def cmd_show(args):
@@ -105,27 +158,93 @@ def cmd_show(args):
     touch_manager(base, streams)
     ensure_watch(base)
     s = get_stream(streams, args.name)
-    cost = s.get("cost") or 0
-    if s["status"] == "running" and s.get("session"):
-        cost = max(cost, session_info(s["session"]).get("cost") or 0)
-    print(f"id: {s['id']}  status: {s['status']}  session: {s.get('session', '-')}  cost: ${cost:.4f}")
-    print(f"dir: {s.get('dir')}  model: {s.get('model', '-')}")
-    if s.get("allow"):
-        print(f"allow: {', '.join(s['allow'])}")
-    print(f"task: {s.get('task')}")
-    if s.get("note"):
-        print(f"note: {s['note']}")
+    now = time.time()
+    runs = ocq_runs(s, now)
+    need_live = s["status"] == "running" or any(nrun for _, _, _, nrun in runs)
+    live = active() if need_live else None
+    sid = s.get("session")
+    o_active, o_bg, o_last_ts, o_tool_run, o_tool, o_reply = (
+        _live_session(sid, s.get("dir"), live, now, limit=30) if sid else (False, [], None, False, None, "")
+    )
+    model = (s.get("model") or "-").split(" ")[0].replace("google/", "")
+    if s["status"] == "running":
+        if o_active:
+            ostate = f"active ({o_tool})" if o_tool_run and o_tool else "active"
+        elif o_bg:
+            ms = (o_bg[0].get("time") or {}).get("started")
+            sdur = f" ({fmt_dur(now - ms / 1000)})" if ms else ""
+            ostate = f"bg shell{sdur}: `{cut(o_bg[0].get('command', ''), 60)}`"
+        else:
+            wait = "waiting on ocq" if any(nrun for _, _, _, nrun in runs) else "idle"
+            turn = f", last turn {ago(o_last_ts, now)}" if o_last_ts else ""
+            ostate = f"idle ({wait}{turn})" if wait != "idle" or turn else "idle"
+    else:
+        fin = s.get("finished") or s.get("updated")
+        ostate = f"{s['status']} ({ago(fin, now)})" if fin else s["status"]
+
+    print(f"{s['id']}  {s['status']}  {stream_dur(s, now)}")
+    print(f"orchestrator: {ostate}  model: {model}")
+    if args.full:
+        print(f"session: {s.get('session', '-')}  dir: {s.get('dir')}")
+        if s.get("allow"):
+            print(f"allow: {', '.join(s['allow'])}")
+        print(f"task: {s.get('task')}")
+    if s.get("error"):
+        print(f"error: {s['error']}")
     if s.get("msg"):
-        print(f"msg: {s['msg']}")
+        when = f" ({ago(s['msg_at'], now)})" if s.get("msg_at") else ""
+        print(f"msg{when}: {s['msg']}")
+    if s.get("note") and s["status"] in ("done", "failed"):
+        print(f"note: {s['note']}")
     for d in s.get("denied") or []:
         print(f"denied: {d}")
-    for rname, rsum, _, _ in ocq_runs(s):
-        print(f"ocq/{rname}: {rsum}")
-    if s.get("session"):
-        txt = turn_text(messages(s["session"], limit=30))
-        if txt:
-            print("--- last reply ---")
-            print(txt[: args.chars])
+
+    for rname, rsum, tasks, _ in runs:
+        print(f"\nocq/{rname} ({rsum}):")
+        for t in tasks.values():
+            if t["status"] != "running":
+                print("  " + worker_row(t, now))
+                for d in t.get("denied") or []:
+                    print(f"    denied: {d}")
+                continue
+            att = f" a{t['attempts']}" if (t.get("attempts") or 0) > 1 else ""
+            denied = f" [denied {len(t['denied'])}]" if t.get("denied") else ""
+            print(f"  {t['id']} running  {task_dur(t, now):<6}  {_worker_tag(t)}{att}{denied}")
+            print(f"    task: {cut(t.get('task', ''), 130)}")
+            for d in t.get("denied") or []:
+                print(f"    denied: {d}")
+            wsid = t.get("session")
+            if wsid:
+                w_active, w_bg, w_last_ts, w_tool_run, w_tool, w_reply = _live_session(wsid, s.get("dir"), live, now, limit=10)
+                parts = []
+                if w_active:
+                    parts.append(f"active, {w_tool}" if w_tool_run and w_tool else "active")
+                    if w_tool and not w_tool_run:
+                        parts.append(w_tool)
+                elif w_bg:
+                    ms = (w_bg[0].get("time") or {}).get("started")
+                    sdur = f" ({fmt_dur(now - ms / 1000)})" if ms else ""
+                    parts.append(f"bg shell{sdur}: `{cut(w_bg[0].get('command', ''), 65)}`")
+                    if w_tool:
+                        parts.append(w_tool)
+                else:
+                    parts.append(f"idle (last turn {ago(w_last_ts, now)})" if w_last_ts else "idle")
+                    if w_tool:
+                        parts.append(w_tool)
+                print("    live: " + " | ".join(parts))
+                if t.get("msg"):
+                    when = f" ({ago(t['msg_at'], now)})" if t.get("msg_at") else ""
+                    print(f"    msg{when}: {cut(t['msg'], 130)}")
+                if w_reply:
+                    print(f"    last: {cut(w_reply, 130)}")
+
+    if o_reply:
+        if s["status"] == "running":
+            hdr = f"--- O last reply ({ago(o_last_ts, now)}) ---" if o_last_ts else "--- O last reply ---"
+        else:
+            hdr = "--- O report ---"
+        print(f"\n{hdr}")
+        print(o_reply[: args.chars])
 
 
 def cmd_send(args):
@@ -153,7 +272,7 @@ def cmd_send(args):
         die(f"{s['id']} is {s['status']}: cannot send (start a new stream)")
     mgr = touch_manager(base, streams)
     allow = list(dict.fromkeys((s.get("allow") or []) + list(args.allow or [])))
-    api("PATCH", f"/api/session/{s['session']}", {"permissions": rules_for(allow)})
+    set_permissions(s["session"], "orchestrator", rules_for(allow), s.get("dir"))
     was = s["status"]
     delivery = "queue" if args.queue else "steer"
     head = '[ocm manager — mid-run reply via `gski ocm send .. "..."`]' if was == "running" else "[ocm manager]"

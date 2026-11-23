@@ -5,6 +5,7 @@ from pathlib import Path
 from gski.oc_lib.api import (
     active,
     assistants,
+    denied_calls,
     err_text,
     messages,
     pending_input,
@@ -47,6 +48,12 @@ def settle_event(rd, cfg, t):
         err = f"session {info['outcome']}"
     else:
         err = None
+
+    seen = set(t.get("denied") or [])
+    for d in denied_calls(msgs, sent):
+        if d not in seen:
+            append(rd, id=t["id"], denied=d)
+            seen.add(d)
 
     reply = cut(turn_text(msgs), 200)
     art = t.get("artifact")

@@ -10,16 +10,18 @@ def register(subparsers):
     s.add_argument("text", help="high-level task for the orchestrator")
     s.add_argument("--dir", help="working directory for the orchestrator (default: cwd)")
     s.add_argument("--model", help="provider/model")
-    s.add_argument("--allow", action="append", help="extra allow rule, e.g. 'shell:git *' or 'shell:ssh host *'")
+    s.add_argument("--allow", action="append", help="extra allow rule, e.g. 'shell:git *' or 'shell:ssh *'")
     s.set_defaults(func=cmd_start)
 
     s = sub.add_parser("ls", help="list orchestrator streams and their ocq runs")
     s.add_argument("--status", nargs="+")
+    s.add_argument("--all", action="store_true", help="expand workers for finished streams too")
     s.set_defaults(func=cmd_ls)
 
-    s = sub.add_parser("show", help="show stream details and orchestrator's last reply")
+    s = sub.add_parser("show", help="show stream status, workers, and orchestrator's last reply")
     s.add_argument("name")
     s.add_argument("--chars", type=int, default=4000)
+    s.add_argument("--full", action="store_true", help="include full task prompt, allow rules, session, and dir")
     s.set_defaults(func=cmd_show)
 
     s = sub.add_parser("send", help="message a stream (<name> <text>) or parent manager (.. <text>)")

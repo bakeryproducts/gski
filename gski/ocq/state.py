@@ -57,7 +57,13 @@ def fold(rd):
         except json.JSONDecodeError:
             continue
         t = tasks.setdefault(ev["id"], {"id": ev["id"], "attempts": 0})
-        t["updated"] = ev.pop("t", None)
+        ts = ev.pop("t", None)
+        t["updated"] = ts
+        if "msg" in ev:
+            if ev["msg"]:
+                t["msg_at"] = ts
+            else:
+                t.pop("msg_at", None)
         denied = ev.pop("denied", None)
         if denied == []:
             t.pop("denied", None)
@@ -187,6 +193,7 @@ def build_prompt(rd, run, t):
         t["task"],
         "",
         "No human is available. Stay in scope; if blocked, report failed with reason and partial work.",
+        'If a needed action is denied by permissions, do not work around it: stop with status "failed" naming the needed --allow rule in note (parent can grant --allow and resume this session), or request it mid-run via gski ocq send .. "..." while continuing other work.',
         "No extra tests, paranoid syntax checks, or validation unless asked in the brief or task. Observe execution errors; done means execution completed.",
         'Mid-run message to orchestrator: gski ocq send .. "..."',
         "",

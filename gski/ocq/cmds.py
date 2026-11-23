@@ -5,13 +5,13 @@ import time
 
 from gski.oc_lib.api import (
     active,
-    api,
     create_session,
     interrupt,
     kill_shell,
     messages,
     send_prompt,
     send_synthetic,
+    set_permissions,
     shells,
     turn_text,
 )
@@ -161,7 +161,8 @@ def cmd_send(args):
         die(f"{t['id']} has no session")
     extra = list(dict.fromkeys((t.get("allow") or []) + list(args.allow or [])))
     rules, merged_allow = rules_for(cfg, extra)
-    api("PATCH", f"/api/session/{t['session']}", {"permissions": rules})
+    agent = t.get("agent") or cfg.get("agent") or "worker"
+    set_permissions(t["session"], agent, rules, cfg["dir"])
     rel = f".ocq/runs/{run_name}/results/{t['id']}.json"
     prompt = (
         f'[ocq orchestrator — mid-run reply via `gski ocq send .. "..."`; '

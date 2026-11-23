@@ -145,14 +145,30 @@ def _retry(fn, tries=20):
     return None
 
 
-def resolve_model(agent, model):
+def agent_info(agent, directory=None):
+    q = f"?{_loc(directory)}" if directory else ""
+    agents = _retry(lambda: fetch(f"/api/agent{q}")) or []
+    info = next((a for a in agents if a.get("id") == agent), None)
+    if not info:
+        die(f"unknown agent: {agent}")
+    return info
+
+
+def headless_rules(agent, rules, directory=None, info=None):
+    perms = (info or agent_info(agent, directory)).get("permissions") or []
+    base = [
+        {"action": r["action"], "resource": r["resource"], "effect": "deny" if r["effect"] == "ask" else r["effect"]}
+        for r in perms
+    ]
+    return base + list(rules or [])
+
+
+def resolve_model(agent, model, directory=None, info=None):
     prov, mid, var = parse_model(model)
     src = "run"
     if not mid:
         src = "agent"
-        info = _retry(lambda: next((a for a in fetch("/api/agent") or [] if a.get("id") == agent), None))
-        if not info:
-            die(f"unknown agent: {agent}")
+        info = info or agent_info(agent, directory)
         m = info.get("model") or {}
         prov, mid, var = m.get("providerID"), m.get("id"), m.get("variant")
     if not mid:
@@ -169,11 +185,12 @@ def fmt_model(ref):
 
 
 def create_session(title, agent, model, rules, directory, metadata=None):
-    ref, src = resolve_model(agent, model)
+    info = agent_info(agent, directory)
+    ref, src = resolve_model(agent, model, directory, info=info)
     body = {
         "title": title,
         "agent": agent,
-        "permissions": rules,
+        "permissions": headless_rules(agent, rules, directory, info=info),
         "location": {"directory": directory},
         "model": ref,
         **({"metadata": metadata} if metadata else {}),
@@ -183,6 +200,10 @@ def create_session(title, agent, model, rules, directory, metadata=None):
     if (got.get("providerID"), got.get("id")) != (ref["providerID"], ref["id"]):
         die(f"server did not apply model {fmt_model(ref)} (got {fmt_model(got) if got else 'none'})")
     return s, f"{fmt_model(ref)} ({src})"
+
+
+def set_permissions(sid, agent, rules, directory=None):
+    return api("PATCH", f"/api/session/{sid}", {"permissions": headless_rules(agent, rules, directory)})
 
 
 def send_prompt(sid, text, delivery=None):
@@ -287,6 +308,38 @@ def err_text(err):
     if not isinstance(err, dict):
         return str(err)
     return f"{err.get('type') or err.get('name') or 'error'}: {err.get('message', '')}".strip(": ")
+
+
+def denied_calls(msgs, since=0):
+    out = []
+    cutoff = (since or 0) * 1000
+    for m in reversed(msgs):
+        if cutoff and (m.get("time") or {}).get("created", 0) < cutoff:
+            continue
+        for c in m.get("content") or []:
+            if c.get("type") != "tool":
+                continue
+            st = c.get("state") or {}
+            err = st.get("error") or {}
+            if not isinstance(err, dict) or err.get("type") != "permission.rejected" or err.get("message") == DENY_MSG:
+                continue
+            msg = err.get("message") or ""
+            act = msg.removeprefix("Permission denied:").strip() if msg.startswith("Permission denied:") else (c.get("name") or "tool")
+            inp = st.get("input") or {}
+            res = (
+                inp.get("command")
+                or inp.get("path")
+                or inp.get("pattern")
+                or inp.get("url")
+                or inp.get("query")
+                or inp.get("id")
+                or inp.get("agent")
+                or ""
+            )
+            what = " ".join(f"{act}: {res}".strip(": ").split())[:120]
+            if what and what not in out:
+                out.append(what)
+    return out
 
 
 def sweep(target_dir, by_session, append_fn):

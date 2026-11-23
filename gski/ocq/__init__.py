@@ -12,7 +12,7 @@ def register(subparsers):
     s.add_argument("--file", help="jsonl ({task, id?, agent?, model?, allow?}) or plain lines; - for stdin")
     s.add_argument("--agent", help="worker (default) or builder")
     s.add_argument("--model", help="provider/model")
-    s.add_argument("--allow", action="append", help="extra allow rule, e.g. 'shell:ssh host *'")
+    s.add_argument("--allow", action="append", help="extra allow rule, e.g. 'shell:ssh *'")
     s.set_defaults(func=cmd_spawn)
 
     s = sub.add_parser("ls", help="list runs, or tasks and results in <run>")

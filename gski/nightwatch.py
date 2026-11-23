@@ -126,7 +126,7 @@ def watch(sid):
                             print(f"{label.lower()}: {reply[:300]}")
                             return
                     if attempts >= 3:
-                        print("unresolved: no terminal confirmation or restored wait after three checks")
+                        print("unresolved: no terminal confirmation or active stream after three checks")
                         return
                     probe = "msg_" + uuid4().hex
                     attempts += 1
@@ -175,7 +175,7 @@ def run(args):
     if info.get("agent") != "manager":
         die(f"{sid} is not a manager session")
     env = ["-E" + k for k in ("OCQ_URL", "OCQ_PASSWORD", "XDG_STATE_HOME") if k in os.environ]
-    subprocess.run(["systemd-run", "--user", "--collect", "--service-type=exec", "--unit", unit, *env,
+    subprocess.run(["systemd-run", "--user", "--collect", "--service-type=exec", "-p", "KillMode=process", "--unit", unit, *env,
                     sys.executable, "-u", "-m", "gski.nightwatch", sid], check=True)
     print(f"watching: {sid}")
 
